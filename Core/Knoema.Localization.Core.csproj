@@ -49,10 +49,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="LocalizationCache.cs" />
-    <Compile Include="Repository\LocalizedObject.cs" />
     <Compile Include="DefaultCulture.cs" />
     <Compile Include="Extensions\StringExtensions.cs" />
     <Compile Include="LocalizationManager.cs" />
+    <Compile Include="Repository\LocalizedObject.cs" />
     <Compile Include="Web\LocalizationHttpModule.cs" />
     <Compile Include="Repository\ILocalizationRepository.cs" />
     <Compile Include="Repository\ILocalizedObject.cs" />

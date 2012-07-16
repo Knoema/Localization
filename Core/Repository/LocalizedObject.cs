@@ -1,7 +1,7 @@
 ﻿
 namespace Knoema.Localization.Repository
 {
-	public class LocalizedObject: ILocalizedObject
+	internal class LocalizedObject: ILocalizedObject
 	{
 		public int Key { get; set; }
 		public int LocaleId { get; set; }

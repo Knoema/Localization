@@ -22,6 +22,7 @@ namespace Sample
 		public static void RegisterRoutes(RouteCollection routes)
 		{
 			routes.IgnoreRoute("{resource}.axd/{*pathInfo}");
+			routes.IgnoreRoute("_localization/{*route}");
 
 			routes.MapRoute(
 				"Default", // Route name
@@ -40,6 +41,8 @@ namespace Sample
 
 			RegisterGlobalFilters(GlobalFilters.Filters);
 			RegisterRoutes(RouteTable.Routes);
+
+			Knoema.Localization.LocalizationManager.Repository = new Knoema.Localization.EFProvider.LocalizationRepository();
 		}
 	}
 }

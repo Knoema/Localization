@@ -10,7 +10,6 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Web;
 using System.Web.Script.Serialization;
-using Knoema.Localization.Repository;
 
 namespace Knoema.Localization.Web
 {
@@ -49,7 +48,7 @@ namespace Knoema.Localization.Web
 		{
 			string response;
 
-			if (context.Request.Url.AbsolutePath.Contains("/localization/api"))
+			if (context.Request.Url.AbsolutePath.Contains("/_localization/api"))
 				response = Api(
 						context,
 						context.Request.Url.Segments[context.Request.Url.Segments.Length - 1],
@@ -147,7 +146,7 @@ namespace Knoema.Localization.Web
 							{
 								var json = reader.ReadToEnd();
 								_manager.Import(
-									serializer.Deserialize<IEnumerable<LocalizedObject>>(json).ToArray());
+									serializer.Deserialize<IEnumerable<Repository.LocalizedObject>>(json).ToArray());
 							}
 					}
 					break;

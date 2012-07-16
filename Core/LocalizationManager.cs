@@ -5,7 +5,6 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Web.Configuration;
-using Knoema.Localization.Repository;
 using System;
 
 namespace Knoema.Localization
@@ -50,13 +49,7 @@ namespace Knoema.Localization
 					{
 						var stored = GetLocalizedObject(culture, hash);
 						if (stored == null)
-							Save(new LocalizedObject()
-							{
-								Hash = hash,
-								LocaleId = culture.LCID,
-								Scope = scope,
-								Text = text
-							});
+							Save(Create(hash, culture.LCID, scope, text));
 					}
 				}
 			}
@@ -75,16 +68,21 @@ namespace Knoema.Localization
 			{
 				var stored = GetLocalizedObject(culture, obj.Hash);
 				if (stored == null)
-					res.Add(new LocalizedObject()
-					{
-						Hash = obj.Hash,
-						LocaleId = culture.LCID,
-						Scope = obj.Scope,
-						Text = obj.Text
-					});
+					res.Add(Create(obj.Hash, culture.LCID, obj.Scope, obj.Text));
 			}
 
 			Save(res.ToArray());
+		}
+
+		public ILocalizedObject Create(string hash, int localeId, string scope, string text)
+		{
+			var result = Repository.Create();
+			result.Hash = hash;
+			result.LocaleId = localeId;
+			result.Scope = scope;
+			result.Text = text;
+
+			return result;
 		}
 
 		public ILocalizedObject Get(int key)
@@ -165,13 +163,7 @@ namespace Knoema.Localization
 				// check object for default culture
 				var def = GetLocalizedObject(DefaultCulture.Value, obj.Hash);
 				if (def == null)
-					import.Add(new LocalizedObject() 
-					{
-						Hash = obj.Hash,
-						LocaleId = DefaultCulture.Value.LCID,
-						Scope = obj.Scope,
-						Text = obj.Text
-					});
+					import.Add(Create(obj.Hash, DefaultCulture.Value.LCID, obj.Scope, obj.Text));
 			}
 
 			Save(import.ToArray());
