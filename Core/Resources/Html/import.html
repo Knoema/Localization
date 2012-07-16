@@ -1,0 +1,33 @@
+﻿<div id="import">
+	<h3>
+		Export</h3>
+	<form action="/localization/api/export" method="post">
+		<div>
+			<label>
+				Language:
+			</label>
+			<select name="culture" id="culture">
+			</select>
+		</div>
+		<div>
+			<input type="submit" value="Export" />
+		</div>
+	</form>
+	<div style="margin-top: 10px">
+		<h3>
+			Import</h3>
+		<form action="/localization/api/import" method="post" enctype = "multipart/form-data" target="import-frame">
+			<div>
+				<input type="file" id="file" name="file" />
+			</div>
+			<div>
+				<input type="submit" id="import" value="Import" />
+			</div>
+		</form>
+	</div>
+	<div id="status">
+		<label></label>
+		<div></div>
+	</div>
+	<iframe name="import-frame" id="import-frame" style="display:none;"></iframe>
+</div>

@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<configuration>
+    <system.webServer>
+			<modules>
+				<add name="Knoema.Localization" type="Knoema.Localization.Web.LocalizationModule"/>
+			</modules>
+			<handlers>
+				<add name="Knoema.Localization" verb="*" path="localization/*" type="Knoema.Localization.Web.LocalizationHandler" allowPathInfo="true"  />
+			</handlers>
+    </system.webServer>    
+</configuration>

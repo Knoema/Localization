@@ -1,0 +1,210 @@
+﻿using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
+using System.Web.Configuration;
+using Knoema.Localization.Repository;
+using System;
+
+namespace Knoema.Localization
+{
+	public sealed class LocalizationManager
+	{
+		private static object _lock = new object();
+		public static ILocalizationRepository Repository { get; set; }
+
+		private static readonly LocalizationManager _instanse = new LocalizationManager();
+		public static LocalizationManager Instance
+		{
+			get
+			{
+				return _instanse;
+			}
+		}		
+
+		private LocalizationManager() { }
+
+		public string Translate(string scope, string text)
+		{
+			var hash = GetHash(scope + text);
+
+			// get object from cache...
+			var obj = GetLocalizedObject(CultureInfo.CurrentCulture, hash);
+
+			// if null save object to db for all cultures 
+			if (obj == null)
+			{
+				var cultures = Repository.GetCultures().ToList();
+
+				if (!cultures.Contains(CultureInfo.CurrentCulture))
+					cultures.Add(CultureInfo.CurrentCulture);
+
+				if (!cultures.Contains(DefaultCulture.Value))
+					cultures.Add(DefaultCulture.Value);
+
+				foreach (var culture in cultures)
+				{
+					lock (_lock)
+					{
+						var stored = GetLocalizedObject(culture, hash);
+						if (stored == null)
+							Save(new LocalizedObject()
+							{
+								Hash = hash,
+								LocaleId = culture.LCID,
+								Scope = scope,
+								Text = text
+							});
+					}
+				}
+			}
+			else
+				return obj.Translation;
+
+			return null;
+		}
+
+		public void CreateCulture(CultureInfo culture)
+		{
+			var res = new List<ILocalizedObject>();
+
+			var lst = GetAll(DefaultCulture.Value);
+			foreach (var obj in lst)
+			{
+				var stored = GetLocalizedObject(culture, obj.Hash);
+				if (stored == null)
+					res.Add(new LocalizedObject()
+					{
+						Hash = obj.Hash,
+						LocaleId = culture.LCID,
+						Scope = obj.Scope,
+						Text = obj.Text
+					});
+			}
+
+			Save(res.ToArray());
+		}
+
+		public ILocalizedObject Get(int key)
+		{
+			var obj = LocalizationCache.Get<ILocalizedObject>(key.ToString());
+			if (obj == null)
+			{
+				obj = Repository.Get(key);
+				LocalizationCache.Insert(key.ToString(), obj);
+			}
+
+			return obj;
+		}
+
+		public IEnumerable<ILocalizedObject> GetScriptResources(CultureInfo culture)
+		{
+			return GetAll(culture).Where(x => (x.Scope != null) && (x.Scope.EndsWith("js") || x.Scope.EndsWith("htm")));
+		}
+
+		public IEnumerable<ILocalizedObject> GetAll(CultureInfo culture)
+		{
+			var lst = LocalizationCache.Get<IEnumerable<ILocalizedObject>>(culture.Name);
+			if (lst == null)
+			{
+				lst = Repository.GetAll(culture).ToList();
+				LocalizationCache.Insert(culture.Name, lst);
+			}
+
+			return lst;
+		}
+
+		public IEnumerable<CultureInfo> GetCultures()
+		{
+			var lst = LocalizationCache.Get<IEnumerable<CultureInfo>>("cultures");
+			if (lst == null)
+			{
+				lst = Repository.GetCultures().ToList();
+				LocalizationCache.Insert("cultures", lst);
+			}
+
+			return lst;
+		}
+
+
+		public void Delete(params ILocalizedObject[] list)
+		{
+			Repository.Delete(list);
+
+			// clear cache 
+			LocalizationCache.Clear();
+		}
+
+		public void Save(params ILocalizedObject[] list)
+		{
+			Repository.Save(list);
+
+			// clear cache 
+			LocalizationCache.Clear();
+		}
+
+		public void Import(params ILocalizedObject[] list)
+		{
+			var import = new List<ILocalizedObject>();
+			foreach (var obj in list)
+			{
+				var stored = GetLocalizedObject(new CultureInfo(obj.LocaleId), obj.Hash);
+				if (stored != null)
+				{
+					if (!string.IsNullOrEmpty(obj.Translation))
+					{
+						stored.Translation = obj.Translation;
+						import.Add(stored);
+					}
+				}
+				else
+					import.Add(obj);
+
+				// check object for default culture
+				var def = GetLocalizedObject(DefaultCulture.Value, obj.Hash);
+				if (def == null)
+					import.Add(new LocalizedObject() 
+					{
+						Hash = obj.Hash,
+						LocaleId = DefaultCulture.Value.LCID,
+						Scope = obj.Scope,
+						Text = obj.Text
+					});
+			}
+
+			Save(import.ToArray());
+		}
+
+		public string FormatScope(Type type)
+		{
+			var scope = type.Assembly.FullName.Split(',').Length > 0
+					? type.FullName.Replace(type.Assembly.FullName.Split(',')[0], "~")
+					: type.FullName;
+
+			return scope.Replace(".", "/");
+		}
+
+		public IEnumerable<ILocalizedObject> GetLocalizedObjects(CultureInfo culture, string text)
+		{
+			return GetAll(culture).Where(x => x.Text.ToLower() == text.ToLower());
+		}
+
+		private ILocalizedObject GetLocalizedObject(CultureInfo culture, string hash)
+		{
+			return GetAll(culture).FirstOrDefault(x => x.Hash == hash);
+		}
+
+		private string GetHash(string text)
+		{
+			var hash = new MD5CryptoServiceProvider().ComputeHash(Encoding.UTF8.GetBytes(text));
+			var stringBuilder = new StringBuilder();
+
+			for (var i = 0; i < hash.Length; i++)
+				stringBuilder.Append(hash[i].ToString("x2"));
+
+			return stringBuilder.ToString();
+		}
+	}
+}

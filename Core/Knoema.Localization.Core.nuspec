@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata>
+        <id>Knoema.Localization.Core</id>
+        <version>0.1</version>
+        <authors>Knoema</authors>
+        <owners>Knoema</owners>
+        <copyright>© 2012 Knoema</copyright>
+        <licenseUrl>http://github.com/Knoema/Localization</licenseUrl>
+        <projectUrl>http://github.com/Knoema/Localization</projectUrl>
+        <description>This is just core library. Probably you really need Knoema.Localization.Mvc to be integrated into your project</description>
+        <tags>web asp.net mvc localization globalization</tags>
+        <iconUrl>http://knoema.com/favicon.png</iconUrl>
+    </metadata>
+</package>

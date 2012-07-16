@@ -1,0 +1,370 @@
+﻿div#localization
+{
+	font: 10pt Calibri;
+}
+
+div#localization div.button
+{
+	z-index: 1000;
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	background: #222;
+	color: #fff;
+	font-weight: bold;
+	padding: 5px 15px;
+	cursor: pointer;
+}
+
+div#localization div.busy
+{
+	display: none;
+	position: absolute;
+	left: 0;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	text-align: center;
+	background-color: white;
+}
+
+/* popup style */
+div#localization div.popup
+{
+	position: relative;
+	visibility: visible;
+	z-index: 100003;
+	display: block;
+}
+
+div#localization div.popup div.background
+{
+	background: #fff;
+	-ms-filter: alpha(opacity=75);
+	filter: alpha(opacity=75);
+	opacity: .75;
+	position: fixed;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+}
+
+div#localization div.popup div.content
+{
+	position: fixed;
+	width: 900px;
+	height: 600px;
+	box-shadow: 0px 1px 15px #555;
+	background-color: #fff;
+}
+
+div#localization div.popup div.content div.close
+{
+	position: absolute;
+	right: 10px;
+	top: 10px;
+	background: url(/localization/close.png);
+	width: 9px;
+	height: 9px;
+	cursor: pointer;
+}
+
+/* tabs style*/
+div#localization div.popup div.content div.tabs ul
+{
+	margin: 0;
+	padding: 0;
+}
+
+div#localization div.popup div.content div.tabs ul li
+{
+	display: inline-block;
+	margin-right: 2px;
+	padding: 5px 10px;
+	cursor: pointer;
+	background-color: #E5E4E4;
+}
+
+div#localization div.popup div.content div.tabs ul li.selected
+{
+	background-color: #059BDA;
+	font-weight: bold;
+	color: white;
+}
+
+div#localization div.popup div.content div.tab
+{
+	padding: 5px;
+}
+
+/* resources style*/
+
+div#localization div.popup div#resources div#toolbar
+{
+	margin: 5px 5px 10px 5px;
+}
+
+div#localization div.popup div#resources div#toolbar div#lang
+{
+	display: inline;
+}
+
+div#localization div.popup div#resources div#toolbar div#create
+{
+	float: right;
+	margin-top: 0;
+}
+
+/* tree style*/
+div#localization div.popup div#resources div#tree
+{
+	width: 250px;
+	min-height: 100px;
+	max-height: 520px;
+	overflow-y: auto;
+	float: left;
+	border-right: 1px solid #e6e6e6;
+}
+
+div#localization div.popup div#resources ul.tree
+{
+	list-style: none;
+	padding: 0;
+	margin: 0 0 0 10px;
+}
+
+div#localization div.popup div#resources ul.tree li
+{
+	cursor: pointer;
+	width: 400px;
+}
+
+div#localization div.popup div#resources ul.tree span.folder
+{
+	background-image: url(/localization/localization-tree.png);
+	background-position: 0 -68px;
+	width: 32px;
+	height: 20px;
+	display: inline-block;
+	position: relative;
+}
+
+div#localization div.popup div#resources ul.tree span.folder.collapsed
+{
+	background-position: 0 -5px;
+}
+
+div#localization div.popup div#resources ul.tree span.file
+{
+	background-image: url(/localization/localization-tree.png);
+	background-position: 0 -37px;
+	width: 32px;
+	height: 20px;
+	display: inline-block;
+}
+
+div#localization div.popup div#resources ul.tree span.file
+{
+	color: black;
+}
+
+div#localization div.popup div#resources ul.tree span.label
+{
+	top: -7px;
+	position: relative;
+	font-size: 10pt;
+	color: gray;
+}
+
+div#localization div.popup div#resources ul.tree span.label.untranslated
+{
+	color: black;
+}
+
+div#localization div.popup div#resources ul.tree span.label.selected
+{
+	font-weight: bold;
+}
+
+/* Table styles*/
+div#localization div.popup div#resources div#table
+{
+	max-height: 520px;
+	overflow-y: auto;
+	margin-left: 250px;
+	min-height: 300px;
+	padding: 0 10px;
+}
+
+div#localization div.popup div#resources table.resources-table
+{
+	width: 100%;
+}
+
+div#localization div.popup div#resources table.resources-table tbody tr
+{
+	height: 30px;
+}
+
+div#localization div.popup div#resources table.resources-table tbody tr:nth-child(odd)
+{
+	background-color: #F0F0F0;
+}
+
+div#localization div.popup div#resources table.resources-table td
+{
+	font-family: Trebuchet MS;
+	font-size: 9pt;
+	word-wrap: break-word;
+	padding: 0 5px;
+}
+
+div#localization div.popup div#resources table.resources-table tbody
+{
+	overflow: auto;
+	width: 100%;
+}
+
+div#localization div.popup div#resources table.resources-table th
+{
+	font-family: Trebuchet MS;
+	font-size: 10pt;
+	font-weight: bold;
+	padding: 0 5px;
+	text-align: left;
+}
+
+div#localization div.popup div#resources table.resources-table td.op
+{
+	width: 80px;
+}
+
+div#localization div.popup div#resources table.resources-table td.text
+{
+	width: 260px;
+}
+
+div#localization div.popup div#resources table.resources-table td.translation
+{
+	width: 260px;
+}
+
+div#localization div.popup div#resources table.resources-table thead tr.header
+{
+	cursor: pointer;
+	font-weight: bold;
+	background-repeat: no-repeat;
+}
+
+/* edit form styles*/
+
+div#localization div.popup div#resources div#edit div#scope
+{
+	padding: 5px;
+	margin-bottom: 10px;
+	font-family: Trebuchet MS;
+	font-size: 13pt;
+	color: #fff;
+	height: 25px;
+	line-height: 25px;
+	background-color: #059BDA;
+}
+
+div#localization div.popup div#resources div#edit label
+{
+	font-size: 1.15em;
+}
+
+div#localization div.popup div#resources div#edit div#text
+{
+	width: 100%;
+	height: 175px;
+	margin-top: 5px;
+	display: block;
+	border: 1px solid #ccc;
+	background-color: #F2F2F2;
+	overflow-y: auto;
+}
+
+div#localization div.popup div#resources div#edit textarea#translation
+{
+	width: 100%;
+	height: 175px;
+	margin-top: 5px;
+	display: block;
+	overflow-y: auto;
+}
+
+div#localization div.popup div#resources div#edit a#prev
+{
+	text-decoration: none;
+	font: bold 14pt Verdana,Arial,sans-serif;
+}
+
+div#localization div.popup div#resources div#edit a#next
+{
+	text-decoration: none;
+	font: bold 14pt Verdana,Arial,sans-serif;
+	margin-left: 10px;
+}
+
+
+div#localization div.popup div#resources div#operations
+{
+	margin-top: 20px;
+}
+
+div#localization div.popup div#resources div#operations input
+{
+	float: right;
+	margin-left: 5px;
+}
+
+div#localization div.popup div#resources div#operations span#hint
+{
+	float: right;
+	margin: 0 5px;
+	max-width: 430px;
+}
+
+div#localization div.popup div#resources div#operations span#hint span
+{
+	border-bottom: 1px dashed gray;
+	color: gray;
+	margin-right: 8px;
+	white-space: nowrap;
+	word-wrap: normal;
+	cursor: pointer;
+}
+
+/* Import styles*/
+
+div#localization div.popup div#import h3
+{
+	margin: 5px 0;
+	color: #059BDA;
+	font: 13pt Trebuchet MS;
+}
+
+div#localization div.popup div#import input
+{
+	margin: 5px 0;
+}
+
+div#localization div.popup div#import input[type=file]
+{
+	width: 300px;
+}
+
+div#localization div.popup div#import div#status
+{
+	margin-top: 20px;
+}
+
+div#localization div.popup div#import div#status div
+{
+	width: 80px;
+	display: inline;
+	top: 4px;
+}
