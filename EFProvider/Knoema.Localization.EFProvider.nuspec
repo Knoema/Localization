@@ -1,21 +1,18 @@
 <?xml version="1.0"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
-        <id>Knoema.Localization.Mvc</id>
+        <id>Knoema.Localization.EFProvider</id>
         <version>$version$</version>
         <authors>Knoema</authors>
         <owners>Knoema</owners>
         <copyright>© 2012 Knoema</copyright>
         <licenseUrl>http://github.com/Knoema/Localization</licenseUrl>
         <projectUrl>http://github.com/Knoema/Localization</projectUrl>
-        <description>Very unique library for globalization/localization for any ASP.NET MVC app. Covers code, views, JS scripts and more with convenient UI to make translations on the fly</description>
-        <tags>web asp.net mvc localization globalization</tags>
+        <description>Entity Framework provider for Knoema.Localization</description>
+        <tags>web asp.net mvc localization globalization ef entityframework</tags>
         <iconUrl>http://knoema.com/favicon.png</iconUrl>
 				<dependencies>
 					<dependency id="Knoema.Localization.Core" version="$version$" />
 				</dependencies>
 		</metadata>
-		<files>
-			<file src="Web.config.transform" target="content"/>
-		</files>
 	</package>
