@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.Threading;
 using System.Web;
+using System.Linq;
 
 namespace Knoema.Localization.Web
 {
@@ -18,34 +19,41 @@ namespace Knoema.Localization.Web
 			if (LocalizationManager.Repository != null)
 			{
 				var context = ((HttpApplication)sender).Context;
-				var lang = context.Request.QueryString["lang"];
+				var lang = string.Empty;
 
-				if (!string.IsNullOrEmpty(lang))
+				// try to get language from request query, cookie or browser language
+
+				if (context.Request.QueryString["lang"] != null)				
+					lang = context.Request.QueryString["lang"];		
+				
+				else if (context.Request.Cookies[_cookieName] != null)
+					lang = context.Request.Cookies[_cookieName].Value;
+
+				else if (context.Request.UserLanguages != null)
 				{
-					try
-					{
-						Thread.CurrentThread.CurrentCulture =
-							Thread.CurrentThread.CurrentUICulture =
-								new CultureInfo(lang);
+					lang = context.Request.UserLanguages[0];
+					if (lang.Length < 3)
+						lang = string.Format("{0}-{1}", lang, lang.ToUpper());
+				}
 
+				try
+				{
+					var culture = new CultureInfo(lang);
+
+					if (LocalizationManager.Instance.GetCultures().Any(x => x.Name == culture.Name))
+					{
+						Thread.CurrentThread.CurrentCulture = Thread.CurrentThread.CurrentUICulture = culture;
 						context.Response.Cookies.Add(new HttpCookie(_cookieName, lang)
 						{
 							Expires = DateTime.Now.AddYears(1),
 						});
 					}
-					catch (CultureNotFoundException)
-					{
-					}
 				}
-				else if (context.Request.Cookies[_cookieName] != null)
-					Thread.CurrentThread.CurrentCulture =
-						Thread.CurrentThread.CurrentUICulture =
-							new CultureInfo(context.Request.Cookies[_cookieName].Value);
+				catch (CultureNotFoundException) 
+				{ }
 			}
 		}
 
-		public void Dispose()
-		{
-		}
+		public void Dispose() { }		
 	}
 }
