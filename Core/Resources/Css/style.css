@@ -3,6 +3,24 @@
 	font: 10pt Calibri;
 }
 
+div#localization input, div#localization select, div#localization textarea
+{
+	line-height: normal;
+	margin:0;
+	font-size:100%;
+	font-family: sans-serif;
+}
+
+div#localization input[type="submit"]
+{
+	padding:2px 5px;
+}
+
+div#localization p, ul 
+{
+	line-height: 1.231;	
+}
+
 div#localization div.button
 {
 	z-index: 1000;
@@ -120,8 +138,7 @@ div#localization div.popup div#resources div#toolbar div#create
 div#localization div.popup div#resources div#tree
 {
 	width: 250px;
-	min-height: 100px;
-	max-height: 520px;
+	height: 520px;
 	overflow-y: auto;
 	float: left;
 	border-right: 1px solid #e6e6e6;
@@ -218,6 +235,8 @@ div#localization div.popup div#resources table.resources-table td
 	font-size: 9pt;
 	word-wrap: break-word;
 	padding: 0 5px;
+	border:0;
+	background-color:transparent;
 }
 
 div#localization div.popup div#resources table.resources-table tbody
@@ -233,6 +252,8 @@ div#localization div.popup div#resources table.resources-table th
 	font-weight: bold;
 	padding: 0 5px;
 	text-align: left;
+	border:0;
+	background-color:transparent;
 }
 
 div#localization div.popup div#resources table.resources-table td.op

@@ -37,9 +37,6 @@ namespace Knoema.Localization
 			{
 				var cultures = Repository.GetCultures().ToList();
 
-				if (!cultures.Contains(CultureInfo.CurrentCulture))
-					cultures.Add(CultureInfo.CurrentCulture);
-
 				if (!cultures.Contains(DefaultCulture.Value))
 					cultures.Add(DefaultCulture.Value);
 

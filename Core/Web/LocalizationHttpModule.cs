@@ -38,16 +38,11 @@ namespace Knoema.Localization.Web
 
 				try
 				{
-					var culture = new CultureInfo(lang);
-
-					if (LocalizationManager.Instance.GetCultures().Any(x => x.Name == culture.Name))
+					Thread.CurrentThread.CurrentCulture = Thread.CurrentThread.CurrentUICulture = new CultureInfo(lang);
+					context.Response.Cookies.Add(new HttpCookie(_cookieName, lang)
 					{
-						Thread.CurrentThread.CurrentCulture = Thread.CurrentThread.CurrentUICulture = culture;
-						context.Response.Cookies.Add(new HttpCookie(_cookieName, lang)
-						{
-							Expires = DateTime.Now.AddYears(1),
-						});
-					}
+						Expires = DateTime.Now.AddYears(1),
+					});					
 				}
 				catch (CultureNotFoundException) 
 				{ }
