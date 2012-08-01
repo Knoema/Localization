@@ -7,8 +7,7 @@ using System.Linq;
 namespace Knoema.Localization.Web
 {
 	public class LocalizationModule: IHttpModule
-	{
-		private const string _cookieName = "localization-current-lang";
+	{	
 		public void Init(HttpApplication context)
 		{
 			context.BeginRequest += new EventHandler(BeginRequest);
@@ -26,8 +25,8 @@ namespace Knoema.Localization.Web
 				if (context.Request.QueryString["lang"] != null)				
 					lang = context.Request.QueryString["lang"];		
 				
-				else if (context.Request.Cookies[_cookieName] != null)
-					lang = context.Request.Cookies[_cookieName].Value;
+				else if (context.Request.Cookies[LocalizationManager.CookieName] != null)
+					lang = context.Request.Cookies[LocalizationManager.CookieName].Value;
 
 				else if (context.Request.UserLanguages != null)
 				{
@@ -38,11 +37,7 @@ namespace Knoema.Localization.Web
 
 				try
 				{
-					Thread.CurrentThread.CurrentCulture = Thread.CurrentThread.CurrentUICulture = new CultureInfo(lang);
-					context.Response.Cookies.Add(new HttpCookie(_cookieName, lang)
-					{
-						Expires = DateTime.Now.AddYears(1),
-					});					
+					LocalizationManager.Instance.SetCulture(new CultureInfo(lang));
 				}
 				catch (CultureNotFoundException) 
 				{ }

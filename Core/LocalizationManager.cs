@@ -6,11 +6,15 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Web.Configuration;
 using System;
+using System.Web;
+using System.Threading;
 
 namespace Knoema.Localization
 {
 	public sealed class LocalizationManager
 	{
+		public const string CookieName = "localization-current-lang";
+
 		private static object _lock = new object();
 		public static ILocalizationRepository Repository { get; set; }
 
@@ -178,6 +182,15 @@ namespace Knoema.Localization
 		public IEnumerable<ILocalizedObject> GetLocalizedObjects(CultureInfo culture, string text)
 		{
 			return GetAll(culture).Where(x => x.Text.ToLower() == text.ToLower());
+		}
+
+		public void SetCulture(CultureInfo culture)
+		{
+			Thread.CurrentThread.CurrentCulture = Thread.CurrentThread.CurrentUICulture = culture;
+			HttpContext.Current.Response.Cookies.Add(new HttpCookie(CookieName, culture.Name)
+			{
+				Expires = DateTime.Now.AddYears(1),
+			});		
 		}
 
 		private ILocalizedObject GetLocalizedObject(CultureInfo culture, string hash)
