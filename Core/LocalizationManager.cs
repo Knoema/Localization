@@ -186,11 +186,14 @@ namespace Knoema.Localization
 
 		public void SetCulture(CultureInfo culture)
 		{
-			Thread.CurrentThread.CurrentCulture = Thread.CurrentThread.CurrentUICulture = culture;
-			HttpContext.Current.Response.Cookies.Add(new HttpCookie(CookieName, culture.Name)
+			if (CultureInfo.CurrentCulture.LCID != culture.LCID)
 			{
-				Expires = DateTime.Now.AddYears(1),
-			});		
+				Thread.CurrentThread.CurrentCulture = Thread.CurrentThread.CurrentUICulture = culture;
+				HttpContext.Current.Response.Cookies.Add(new HttpCookie(CookieName, culture.Name)
+				{
+					Expires = DateTime.Now.AddYears(1),
+				});
+			}
 		}
 
 		private ILocalizedObject GetLocalizedObject(CultureInfo culture, string hash)
