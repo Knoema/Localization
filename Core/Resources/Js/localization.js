@@ -119,11 +119,15 @@ var localization = (function ($) {
 		culture._busy(
 			$.getJSON('/_localization/api/cultures', function (result) {
 
-				$.each(result, function () {
-					$(buildHtml('option', this.toString(), { 'value': this.toString() })).appendTo(culture);
-				});
+				if (result.length > 0) {
+					$.each(result, function () {
+						$(buildHtml('option', this.toString(), { 'value': this.toString() })).appendTo(culture);
+					});
 
-				tree(culture.val());
+					tree(culture.val());
+				}
+				else
+					$('#tree').html('No languages. To create new language enter name (for example ru-ru) and press "create".');
 			})
 		);
 	};

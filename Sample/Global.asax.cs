@@ -6,6 +6,7 @@ using System.Linq;
 using System.Web;
 using System.Web.Mvc;
 using System.Web.Routing;
+using Knoema.Localization.Mvc;
 
 namespace Sample
 {
@@ -41,8 +42,14 @@ namespace Sample
 
 			RegisterGlobalFilters(GlobalFilters.Filters);
 			RegisterRoutes(RouteTable.Routes);
-
+			
+			// initialize repository
 			Knoema.Localization.LocalizationManager.Repository = new Knoema.Localization.EFProvider.LocalizationRepository();
+
+			// configure localization of models
+			ModelValidatorProviders.Providers.Clear();
+			ModelValidatorProviders.Providers.Add(new ValidationLocalizer());
+			ModelMetadataProviders.Current = new MetadataLocalizer();
 		}
 	}
 }

@@ -4,10 +4,10 @@ using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Web.Mvc;
 using System.Web.Security;
+using Knoema.Localization;
 
 namespace Sample.Models
 {
-
 	public class ChangePasswordModel
 	{
 		[Required]
@@ -27,6 +27,7 @@ namespace Sample.Models
 		public string ConfirmPassword { get; set; }
 	}
 
+	[Localized]
 	public class LogOnModel
 	{
 		[Required]

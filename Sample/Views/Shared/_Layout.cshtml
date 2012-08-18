@@ -15,13 +15,28 @@
             </div>
             <div id="logindisplay">
                 @Html.Partial("_LogOnPartial")
-            </div>
+            </div>			
             <nav>
                 <ul id="menu">
                     <li>@Html.ActionLink(R("Home"), "Index", "Home")</li>
                     <li>@Html.ActionLink(R("About"), "About", "Home")</li>
                 </ul>
             </nav>
+			<div id="switch-language">
+				@{
+					var cultures = Knoema.Localization.LocalizationManager.Instance.GetCultures();
+					if(cultures.Count() > 0)
+					{						
+						<ul>
+							@foreach (var culture in cultures)
+							{
+								<li><a href="@Url.Action("lang", "home", new { culture = @culture.Name })">@culture.Name</a></li>
+							}	
+						</ul>
+					}
+				}
+				</div>
+			</div>
         </header>
         <section id="main">
             @RenderBody()

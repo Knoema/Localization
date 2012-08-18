@@ -86,6 +86,11 @@ namespace Knoema.Localization.Mvc
 				result = new CompareAttribute(attr.OtherProperty);
 			}
 
+			if (attribute is DataTypeAttribute)
+			{
+				var attr = (DataTypeAttribute)attribute;
+				result = new DataTypeAttribute(attr.DataType);
+			}
 			return result;
 		}		
 
