@@ -31,7 +31,7 @@ namespace Knoema.Localization
 
 		public string Translate(string scope, string text)
 		{
-			var hash = GetHash(scope + text);
+			var hash = GetHash(scope.ToLower() + text);
 
 			// get object from cache...
 			var obj = GetLocalizedObject(CultureInfo.CurrentCulture, hash);
@@ -159,7 +159,12 @@ namespace Knoema.Localization
 					}
 				}
 				else
-					import.Add(obj);
+				{
+					var imported = Create(obj.Hash, obj.LocaleId, obj.Scope, obj.Text);
+					imported.Translation = obj.Translation;
+
+					import.Add(imported);
+				}
 
 				// check object for default culture
 				var def = GetLocalizedObject(DefaultCulture.Value, obj.Hash);

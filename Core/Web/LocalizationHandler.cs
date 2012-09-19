@@ -87,7 +87,7 @@ namespace Knoema.Localization.Web
 					response = serializer
 						.Serialize(
 							_manager.GetAll(new CultureInfo(query["culture"]))
-									.Where(x => (x.Scope != null) && x.Scope.StartsWith(query["scope"])));
+									.Where(x => (x.Scope != null) && x.Scope.StartsWith(query["scope"], StringComparison.InvariantCultureIgnoreCase)));
 
 					break;
 
@@ -340,7 +340,7 @@ namespace Knoema.Localization.Web
 
 					path = path.Remove(path.LastIndexOf("/"));
 
-					var node = tree.FirstOrDefault(x => x.Scope == path);
+					var node = tree.FirstOrDefault(x => x.Scope.ToLower() == path.ToLower());
 					if (node == null)
 					{
 						node = new TreeNode(labels[i], path, i == 0, true);						
@@ -352,7 +352,7 @@ namespace Knoema.Localization.Web
 
 					if (i > 0)
 					{
-						var parent = tree.FirstOrDefault(x => x.Scope == path.Remove(path.LastIndexOf("/")));
+						var parent = tree.FirstOrDefault(x => x.Scope.ToLower() == path.Remove(path.LastIndexOf("/")).ToLower());
 						if (!parent.Children.Contains(node))						
 							parent.Children.Add(node);						
 					}
@@ -378,6 +378,11 @@ namespace Knoema.Localization.Web
 			IsRoot = isRoot;
 			Translated = translated;
 			Children = new List<TreeNode>();
+		}
+
+		public override string ToString()
+		{
+			return Scope;
 		}
 	}
 }
