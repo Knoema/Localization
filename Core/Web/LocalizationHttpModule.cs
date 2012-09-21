@@ -41,6 +41,8 @@ namespace Knoema.Localization.Web
 				}
 				catch (CultureNotFoundException) 
 				{ }
+				catch (ArgumentNullException)
+				{ }
 			}
 		}
 
