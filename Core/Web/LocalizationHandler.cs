@@ -151,8 +151,10 @@ namespace Knoema.Localization.Web
 					}
 					break;
 
-				case "push":			
-					if (CultureInfo.CurrentCulture.LCID != DefaultCulture.Value.LCID)
+				case "push":
+					if (string.IsNullOrEmpty(query["scope"]) || string.IsNullOrEmpty(query["text"]))
+						BadRequest(context);
+					else if (CultureInfo.CurrentCulture.LCID != DefaultCulture.Value.LCID)
 						_manager.Translate(query["scope"], query["text"]);					
 					break;
 				case "hint":
@@ -298,6 +300,12 @@ namespace Knoema.Localization.Web
 		private void NotFound(HttpContext context)
 		{
 			context.Response.StatusCode = 404;
+			context.Response.ContentType = "text/plain";
+		}
+
+		private void BadRequest(HttpContext context)
+		{
+			context.Response.StatusCode = 400;
 			context.Response.ContentType = "text/plain";
 		}
 

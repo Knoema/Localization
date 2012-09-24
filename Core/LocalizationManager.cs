@@ -31,8 +31,11 @@ namespace Knoema.Localization
 
 		public string Translate(string scope, string text)
 		{
-			if (scope == null)
+			if (string.IsNullOrEmpty(scope))
 				throw new ArgumentNullException("Scope cannot be null.");
+
+			if (string.IsNullOrEmpty(text))
+				throw new ArgumentNullException("Text cannot be null.");
 
 			var hash = GetHash(scope.ToLower() + text);
 
