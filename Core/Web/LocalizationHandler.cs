@@ -92,13 +92,22 @@ namespace Knoema.Localization.Web
 					break;
 
 				case "edit":
-					var edit = _manager.Get(int.Parse(query["id"]));
-					if (edit != null)
+					
+					if (!string.IsNullOrEmpty(query["id"]))
 					{
-						edit.Translation = query["translation"];
-						_manager.Save(edit);
-					}
+						var key = 0;
+						int.TryParse(query["id"], out key);
 
+						if (key != 0)
+						{
+							var edit = _manager.Get(key);
+							if (edit != null)
+							{
+								edit.Translation = query["translation"];
+								_manager.Save(edit);
+							}
+						}
+					}
 					break;
 
 				case "delete":				
