@@ -45,7 +45,7 @@ namespace Knoema.Localization
 			// if null save object to db for all cultures 
 			if (obj == null)
 			{
-				var cultures = Repository.GetCultures().ToList();
+				var cultures = GetCultures().ToList();
 
 				if (!cultures.Contains(DefaultCulture.Value))
 					cultures.Add(DefaultCulture.Value);
