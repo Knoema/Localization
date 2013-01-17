@@ -41,6 +41,7 @@
     <Reference Include="System.Web.WebPages.Razor, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Mvc\LocalizationSimpleCloneAttribute.cs" />
     <Compile Include="Mvc\LocalizedWebViewPage.cs" />
     <Compile Include="Mvc\MetadataLocalizer.cs" />
     <Compile Include="Mvc\ValidationLocalizer.cs" />

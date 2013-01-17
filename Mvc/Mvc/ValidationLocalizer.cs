@@ -91,6 +91,10 @@ namespace Knoema.Localization.Mvc
 				var attr = (DataTypeAttribute)attribute;
 				result = new DataTypeAttribute(attr.DataType);
 			}
+
+			if (attribute.GetType().GetCustomAttributes(typeof(LocalizationSimpleCloneAttribute), true).Length != 0)
+				result = (ValidationAttribute)Activator.CreateInstance(attribute.GetType());
+
 			return result;
 		}		
 
