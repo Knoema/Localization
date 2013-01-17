@@ -92,8 +92,8 @@ namespace Knoema.Localization.Mvc
 				result = new DataTypeAttribute(attr.DataType);
 			}
 
-			if (attribute.GetType().GetCustomAttributes(typeof(LocalizationSimpleCloneAttribute), true).Length != 0)
-				result = (ValidationAttribute)Activator.CreateInstance(attribute.GetType());
+			if (result == null && attribute.GetType().GetInterfaces().Contains(typeof(ICloneable)))		
+				result = ((ICloneable)attribute).Clone() as ValidationAttribute;
 
 			return result;
 		}		
