@@ -112,7 +112,7 @@ namespace Knoema.Localization
 		public IEnumerable<ILocalizedObject> GetAll(CultureInfo culture)
 		{
 			var lst = LocalizationCache.Get<IEnumerable<ILocalizedObject>>(culture.Name);
-			if (lst == null)
+			if (lst == null || lst.Count() == 0)
 			{
 				lst = Repository.GetAll(culture).ToList();
 				LocalizationCache.Insert(culture.Name, lst);
@@ -124,7 +124,7 @@ namespace Knoema.Localization
 		public IEnumerable<CultureInfo> GetCultures()
 		{
 			var lst = LocalizationCache.Get<IEnumerable<CultureInfo>>("cultures");
-			if (lst == null)
+			if (lst == null || lst.Count() == 0)
 			{
 				lst = Repository.GetCultures().ToList();
 				LocalizationCache.Insert("cultures", lst);

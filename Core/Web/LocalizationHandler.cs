@@ -31,9 +31,9 @@ namespace Knoema.Localization.Web
 					var p = n.Split('.');
 					include = include.Replace("{" + p[p.Length - 2] + "}", GetResourceHash(n));
 				}
-			}			
+			}
 
-			return include;
+			return string.Format(include, GetAppPath());
 		}
 
 		public bool IsReusable
@@ -42,6 +42,13 @@ namespace Knoema.Localization.Web
 			{
 				return true;
 			}
+		}
+
+		static string GetAppPath()
+		{
+			return HttpContext.Current.Request.ApplicationPath == "/" 
+				? string.Empty 
+				: HttpContext.Current.Request.ApplicationPath;
 		}
 
 		public void ProcessRequest(HttpContext context)
@@ -202,7 +209,8 @@ namespace Knoema.Localization.Web
 						output = output
 							.Replace("{data}", new JavaScriptSerializer().Serialize(
 								_manager.GetScriptResources(CultureInfo.CurrentCulture)))
-							.Replace("{ignoreLocalization}", "false");
+							.Replace("{ignoreLocalization}", "false")
+							.Replace("{appPath}", GetAppPath());
 					}						
 					break;
 				case ".css":

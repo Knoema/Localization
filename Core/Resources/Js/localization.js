@@ -9,7 +9,7 @@ var localization = (function ($) {
 	var addPopup = function () {
 
 		var container = getContainer();
-		$.get('/_localization/popup.html', function (result) {
+		$.get('{appPath}/_localization/popup.html', function (result) {
 
 			container.append(result);
 
@@ -62,7 +62,7 @@ var localization = (function ($) {
 		container.html('');
 
 		container._busy(
-			$.get('/_localization/resources.html', function (result) {
+			$.get('{appPath}/_localization/resources.html', function (result) {
 
 				container.append(result);
 
@@ -80,11 +80,11 @@ var localization = (function ($) {
 		container.html('');
 
 		container._busy(
-			$.get('/_localization/import.html', function (result) {
+			$.get('{appPath}/_localization/import.html', function (result) {
 
 				container.append(result);
 
-				$.getJSON('/_localization/api/cultures', function (result) {
+				$.getJSON('{appPath}/_localization/api/cultures', function (result) {
 
 					$.each(result, function () {
 						$(buildHtml('option', this.toString(), { 'value': this.toString() })).appendTo($('#culture'));
@@ -117,7 +117,7 @@ var localization = (function ($) {
 		culture.html('');
 
 		culture._busy(
-			$.getJSON('/_localization/api/cultures', function (result) {
+			$.getJSON('{appPath}/_localization/api/cultures', function (result) {
 
 				if (result.length > 0) {
 					$.each(result, function () {
@@ -140,7 +140,7 @@ var localization = (function ($) {
 		container.find('#toolbar')._busy(
 			$.ajax({
 				type: 'POST',
-				url: '/_localization/api/create',
+				url: '{appPath}/_localization/api/create',
 				data: 'culture=' + culture,
 				success: function (result) {
 					if (result != '') {
@@ -161,7 +161,7 @@ var localization = (function ($) {
 			container.html('');
 
 			container._busy(
-				$.getJSON('/_localization/api/tree?culture=' + culture, function (result) {
+				$.getJSON('{appPath}/_localization/api/tree?culture=' + culture, function (result) {
 
 					parseTree(result, container);
 
@@ -218,7 +218,7 @@ var localization = (function ($) {
 			container.html('');
 
 			container._busy(
-				$.getJSON('/_localization/api/table?culture=' + culture + '&scope=' + scope, function (result) {
+				$.getJSON('{appPath}/_localization/api/table?culture=' + culture + '&scope=' + scope, function (result) {
 
 					var table = $(buildHtml('table', { 'class': 'resources-table' })).appendTo(container);
 
@@ -325,7 +325,7 @@ var localization = (function ($) {
 
 			$.ajax({
 				type: 'POST',
-				url: '/_localization/api/edit',
+				url: '{appPath}/_localization/api/edit',
 				data: 'id=' + key + '&translation=' + t,
 				success: function () {
 					var href = $('a[key="' + key + '"]');
@@ -339,7 +339,7 @@ var localization = (function ($) {
 			var hint = $('#hint');
 
 			hint.html('');
-			$.getJSON('/_localization/api/hint?culture=' + $('#culture').val() + '&text=' + text, function (result) {
+			$.getJSON('{appPath}/_localization/api/hint?culture=' + $('#culture').val() + '&text=' + text, function (result) {
 
 				if (result.length > 0) {
 
@@ -375,7 +375,7 @@ var localization = (function ($) {
 		};
 
 		container._busy(
-			$.get('/_localization/edit.html', function (result) {
+			$.get('{appPath}/_localization/edit.html', function (result) {
 
 				var editContainer = $(result).appendTo(container);
 
@@ -412,7 +412,7 @@ var localization = (function ($) {
 
 		$.ajax({
 			type: 'POST',
-			url: '/_localization/api/delete',
+			url: '{appPath}/_localization/api/delete',
 			data: 'id=' + id,
 			success: function () {
 				$('a[key="' + id + '"]').closest("tr").hide('fast');
@@ -458,7 +458,7 @@ jQuery.fn.extend({
 	_busy: function (deferred) {
 
 		var element = this;
-		var div = $('<div class="busy"><img src="/_localization/loading.gif"/></div>');
+		var div = $('<div class="busy"><img src="{appPath}/_localization/loading.gif"/></div>');
 
 		var pos = element.css('position');
 		if (pos == 'static')

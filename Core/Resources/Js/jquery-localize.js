@@ -8,7 +8,7 @@
 			if(scope == undefined || scope == '')
 				return text;
 
-			var url = '/_localization/api/push';
+			var url = '{appPath}/_localization/api/push';
 			var data = $.parseJSON('{data}');
 
 			var t = null;
