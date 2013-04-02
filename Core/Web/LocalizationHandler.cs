@@ -209,9 +209,11 @@ namespace Knoema.Localization.Web
 						output = output
 							.Replace("{data}", new JavaScriptSerializer().Serialize(
 								_manager.GetScriptResources(CultureInfo.CurrentCulture)))
-							.Replace("{ignoreLocalization}", "false")
-							.Replace("{appPath}", GetAppPath());
+							.Replace("{ignoreLocalization}", "false");		
 					}						
+
+					output = output.Replace("{appPath}", GetAppPath());
+
 					break;
 				case ".css":
 					response.ContentType = "text/css";

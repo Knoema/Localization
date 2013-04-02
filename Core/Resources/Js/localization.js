@@ -176,7 +176,7 @@ var localization = (function ($) {
 						table(culture, $(this).attr('scope'));
 					});
 
-					tree.find('li span.label').first().click();
+					//tree.find('li span.label').first().click();
 
 				})
 			);
