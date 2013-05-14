@@ -59,16 +59,21 @@ var localization = (function ($) {
 
 		var container = getContainer().find('div.tab');
 
-		container.html('');
+		container.empty();
 
 		container._busy(
 			$.get('{appPath}/_localization/resources.html', function (result) {
 
 				container.append(result);
-
 				loadResources();
-				$('div#create input[type="button"]').click(createLanguage);
 
+				container.find('div#search input[type="text"]').keydown(function (event) {
+
+					var text = getContainer().find('div#search input[type="text"]').val();
+
+					if (event.keyCode == 13 && text != '')
+						search($('#culture').val(), text);	
+				});
 			})
 		);
 	};
@@ -77,12 +82,13 @@ var localization = (function ($) {
 
 		var container = getContainer().find('div.tab');
 
-		container.html('');
+		container.empty();
 
 		container._busy(
 			$.get('{appPath}/_localization/import.html', function (result) {
 
 				container.append(result);
+				container.find('div#create-lang input[type="button"]').click(createLanguage);
 
 				$.getJSON('{appPath}/_localization/api/cultures', function (result) {
 
@@ -114,7 +120,7 @@ var localization = (function ($) {
 			tree(culture.val());
 		});
 
-		culture.html('');
+		culture.empty();
 
 		culture._busy(
 			$.getJSON('{appPath}/_localization/api/cultures', function (result) {
@@ -135,18 +141,18 @@ var localization = (function ($) {
 	var createLanguage = function () {
 
 		var container = getContainer();
-		var culture = $('div#create input[type="text"]').val();
+		var culture = container.find('div#create-lang input[type="text"]').val();
 
-		container.find('#toolbar')._busy(
+		container.find('#status div')._busy(
 			$.ajax({
 				type: 'POST',
 				url: '{appPath}/_localization/api/create',
 				data: 'culture=' + culture,
 				success: function (result) {
-					if (result != '') {
-						if ($('#culture option[value="' + culture + '"]').length == 0)
-							$(buildHtml('option')).val(result).text(result).appendTo($('#culture'));
-					}
+					if (result != '')
+						container.find('#status label').text(culture + ' culture has been created.');
+					else
+						container.find('#status label').text('Failed to create a culture ' + culture + '.');
 				}
 			})
 		);
@@ -157,14 +163,30 @@ var localization = (function ($) {
 		if (culture != null) {
 
 			var container = getContainer().find('div#tree');
-
-			container.html('');
+			container.empty();
 
 			container._busy(
 				$.getJSON('{appPath}/_localization/api/tree?culture=' + culture, function (result) {
 
-					parseTree(result, container);
+					if (localizationScope && localizationScope.length > 0) {
 
+						var scope = { Children: [], IsRoot: true, Label: 'Current page', Scope: '', Translated: false };
+
+						$.each(localizationScope, function () {
+							scope.Children.push({
+								Children: [],
+								IsRoot: false,
+								Label: this,
+								Scope: this,
+								Translated: isTranslated(this, result[0].Children)
+							});
+						});
+
+						parseTree([scope], container);
+					};
+
+					parseTree(result, container);
+					
 					var tree = $('ul.tree');
 
 					tree.find('li span.folder').click(collapse);
@@ -173,13 +195,31 @@ var localization = (function ($) {
 						$('ul.tree li span.label').removeClass('selected');
 						$(this).addClass('selected');
 
-						table(culture, $(this).attr('scope'));
+						if ($(this).attr('scope') != '')
+							table(culture, $(this).attr('scope'));
 					});
-
-					//tree.find('li span.label').first().click();
 
 				})
 			);
+
+			var isTranslated = function (scope, tree) {
+				
+				for (var i = 0; i < tree.length; i++ ){
+
+					if (tree[i].Scope.toLowerCase() == scope)
+						return tree[i].Translated;
+
+					if (tree[i].Children.length > 0) {
+
+						var res = isTranslated(scope, tree[i].Children);
+
+						if (res != null)
+							return res;
+					};
+				};
+
+				return null;
+			};
 
 			var parseTree = function (treeNode, container) {
 
@@ -208,6 +248,52 @@ var localization = (function ($) {
 				return false;
 			};
 		}
+	};	
+
+	var buildTable = function (result, container) {
+
+		var table = $(buildHtml('table', { 'class': 'resources-table' })).appendTo(container);
+
+		// headers
+		var row = $(buildHtml('tr', { 'class': 'header' })).appendTo(table);
+		$(buildHtml('th', 'Text')).appendTo(row);
+		$(buildHtml('th', 'Translation')).appendTo(row);
+		$(buildHtml('th')).appendTo(row);
+
+		// resources
+		for (var i = 0; i < result.length; i++) {
+
+			var row = $(buildHtml('tr')).appendTo(table);
+			$(buildHtml('td', result[i].Text, { 'class': 'text' })).appendTo(row);
+			$(buildHtml('td', result[i].Translation, { 'class': 'translation' })).appendTo(row);
+
+			var op = $(buildHtml('td', { 'class': 'op' })).appendTo(row);
+
+			var edit = $(buildHtml('a', 'Edit', {
+				'href': '#',
+				'key': result[i].Key,
+				'prev': i == 0 ? '' : result[i - 1].Key,
+				'next': i + 1 == result.length ? '' : result[i + 1].Key,
+				'scope': result[i].Scope
+			})).appendTo(op)
+
+			op.append('&nbsp;');
+
+			var del = $(buildHtml('a', 'Delete', {
+				'href': '#',
+				'key': result[i].Key
+			})).appendTo(op);
+
+			edit.click(function () {
+				editTranslation($(this).attr('key'));
+				return false;
+			});
+
+			del.click(function () {
+				deleteTranslation($(this).attr('key'));
+				return false;
+			});
+		};
 	};
 
 	var table = function (culture, scope) {
@@ -215,58 +301,34 @@ var localization = (function ($) {
 		if (culture != null) {
 
 			var container = getContainer().find('div#table');
-			container.html('');
+			container.empty();
 
 			container._busy(
 				$.getJSON('{appPath}/_localization/api/table?culture=' + culture + '&scope=' + scope, function (result) {
-
-					var table = $(buildHtml('table', { 'class': 'resources-table' })).appendTo(container);
-
-					// headers
-					var row = $(buildHtml('tr', { 'class': 'header' })).appendTo(table);
-					$(buildHtml('th', 'Text')).appendTo(row);
-					$(buildHtml('th', 'Translation')).appendTo(row);
-					$(buildHtml('th')).appendTo(row);
-
-					// resources
-					for (var i = 0; i < result.length; i++) {
-
-						var row = $(buildHtml('tr')).appendTo(table);
-						$(buildHtml('td', result[i].Text, { 'class': 'text' })).appendTo(row);
-						$(buildHtml('td', result[i].Translation, { 'class': 'translation' })).appendTo(row);
-
-						var op = $(buildHtml('td', { 'class': 'op' })).appendTo(row);
-
-						var edit = $(buildHtml('a', 'Edit', {
-							'href': '#',
-							'key': result[i].Key,
-							'prev': i == 0 ? '' : result[i - 1].Key,
-							'next': i + 1 == result.length ? '' : result[i + 1].Key,
-							'scope': result[i].Scope
-						})).appendTo(op)
-
-						op.append('&nbsp;');
-
-						var del = $(buildHtml('a', 'Delete', {
-							'href': '#',
-							'key': result[i].Key
-						})).appendTo(op);
-
-						edit.click(function () {
-							editTranslation($(this).attr('key'));
-							return false;
-						});
-
-						del.click(function () {
-							deleteTranslation($(this).attr('key'));
-							return false;
-						});
-					};
-
+					buildTable(result, container);
 				})
 			);
 		};
 	};
+
+	var search = function (culture, query) {
+
+		if (culture != null) {
+
+			var container = getContainer().find('div#table');
+			container.empty();
+
+			container._busy(
+				$.getJSON('{appPath}/_localization/api/search?culture=' + culture + '&text=' + query, function (result) {
+					if (result.length > 0)
+						buildTable(result, container);
+					else
+						container.html('No results for "' + query + '"');
+				})
+			);
+		};
+	};
+
 
 	var editTranslation = function (id) {
 
@@ -338,7 +400,7 @@ var localization = (function ($) {
 
 			var hint = $('#hint');
 
-			hint.html('');
+			hint.empty();
 			$.getJSON('{appPath}/_localization/api/hint?culture=' + $('#culture').val() + '&text=' + text, function (result) {
 
 				if (result.length > 0) {

@@ -128,17 +128,23 @@ div#localization div.popup div#resources div#toolbar div#lang
 	display: inline;
 }
 
-div#localization div.popup div#resources div#toolbar div#create
+div#localization div.popup div#resources div#toolbar div#search
 {
 	float: right;
 	margin-top: 0;
 }
 
+div#localization div.popup div#resources div#search input[type="text"]
+{
+	width: 580px;
+}
+
 /* tree style*/
 div#localization div.popup div#resources div#tree
 {
+	margin-top: 10px;
 	width: 250px;
-	height: 520px;
+	height: 510px;
 	overflow-y: auto;
 	float: left;
 	border-right: 1px solid #e6e6e6;

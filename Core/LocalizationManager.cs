@@ -190,9 +190,12 @@ namespace Knoema.Localization
 			return scope.Replace(".", "/");
 		}
 
-		public IEnumerable<ILocalizedObject> GetLocalizedObjects(CultureInfo culture, string text)
+		public IEnumerable<ILocalizedObject> GetLocalizedObjects(CultureInfo culture, string text, bool strict = true)
 		{
-			return GetAll(culture).Where(x => x.Text.ToLower() == text.ToLower());
+			if(strict)
+				return GetAll(culture).Where(x => x.Text.ToLower() == text.ToLower());
+			else
+				return GetAll(culture).Where(x => x.Text.ToLower().Contains(text.ToLower()));
 		}
 
 		public void SetCulture(CultureInfo culture)
@@ -205,6 +208,21 @@ namespace Knoema.Localization
 					Expires = DateTime.Now.AddYears(1),
 				});
 			}
+		}
+
+		public void InsertScope(string path)
+		{
+			var scope = HttpContext.Current.Items["localizationScope"] as List<string> ?? new List<string>();
+
+			if (!scope.Contains(path))
+				scope.Add(path);
+
+			HttpContext.Current.Items["localizationScope"] = scope;
+		}
+
+		public List<string> GetScope()
+		{
+			return HttpContext.Current.Items["localizationScope"] as List<string>;
 		}
 
 		private ILocalizedObject GetLocalizedObject(CultureInfo culture, string hash)

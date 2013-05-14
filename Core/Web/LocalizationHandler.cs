@@ -17,10 +17,11 @@ namespace Knoema.Localization.Web
 	{
 		private static readonly LocalizationManager _manager =  LocalizationManager.Instance;
 
-		public static string RenderIncludes(bool admin)
+		public static string RenderIncludes(bool admin, List<string> scope)
 		{
 			var include = GetResource(GetResourcePath("include.html"));
 			include = include.Replace("{admin}", admin.ToString().ToLower());
+			include = include.Replace("{localizationScope}", "'" + string.Join("','", scope) + "'");
 
 			var names = typeof(LocalizationHandler).Assembly.GetManifestResourceNames();
 			foreach (var n in names)
@@ -33,7 +34,7 @@ namespace Knoema.Localization.Web
 				}
 			}
 
-			return string.Format(include, GetAppPath());
+			return include.Replace("{appPath}", GetAppPath());
 		}
 
 		public bool IsReusable
@@ -186,6 +187,16 @@ namespace Knoema.Localization.Web
 					}
 					catch (CultureNotFoundException) { }
 					break;
+				case "search":
+					try
+					{
+						response = serializer.Serialize(
+							_manager.GetLocalizedObjects(
+								new CultureInfo(query["culture"]), query["text"], false)
+						);
+					}
+					catch (CultureNotFoundException) { }
+					break;
 			}
 
 			return response;
@@ -204,14 +215,12 @@ namespace Knoema.Localization.Web
 
 					if (LocalizationManager.Repository == null || CultureInfo.CurrentCulture.LCID == DefaultCulture.Value.LCID)
 						output = output.Replace("{ignoreLocalization}", "true");
-					else
-					{
+					else					
 						output = output
-							.Replace("{data}", new JavaScriptSerializer().Serialize(
-								_manager.GetScriptResources(CultureInfo.CurrentCulture)))
-							.Replace("{ignoreLocalization}", "false");		
-					}						
-
+							.Replace("{data}", HttpUtility.JavaScriptStringEncode(new JavaScriptSerializer().Serialize(
+								_manager.GetScriptResources(CultureInfo.CurrentCulture))))
+							.Replace("{ignoreLocalization}", "false");
+					
 					output = output.Replace("{appPath}", GetAppPath());
 
 					break;

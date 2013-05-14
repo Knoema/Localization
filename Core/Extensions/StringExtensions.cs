@@ -8,6 +8,10 @@ namespace Knoema.Localization
 	{
 		public static string Resource(this string value, Type type)
 		{
+			var scope = LocalizationManager.Instance.FormatScope(type);
+
+			LocalizationManager.Instance.InsertScope(scope.ToLower());
+
 			if (type == null)
 				throw new ArgumentNullException();
 
@@ -17,7 +21,7 @@ namespace Knoema.Localization
 			if (LocalizationManager.Repository == null)
 				return value;
 
-			var translation = LocalizationManager.Instance.Translate(LocalizationManager.Instance.FormatScope(type), value);
+			var translation = LocalizationManager.Instance.Translate(scope, value);
 			return string.IsNullOrEmpty(translation)
 					? value
 					: translation;

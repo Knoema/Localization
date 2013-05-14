@@ -1,7 +1,7 @@
-﻿using System.Web;
+﻿using System.Globalization;
+using System.Web;
 using System.Web.Mvc;
 using Knoema.Localization.Web;
-using System.Globalization;
 
 namespace Knoema.Localization.Mvc
 {
@@ -25,7 +25,7 @@ namespace Knoema.Localization.Mvc
 
 		public MvcHtmlString RenderLocalizationIncludes(bool admin)
 		{
-			return MvcHtmlString.Create(LocalizationHandler.RenderIncludes(admin));
+			return MvcHtmlString.Create(LocalizationHandler.RenderIncludes(admin, LocalizationManager.Instance.GetScope()));
 		}
 	}
 
@@ -33,6 +33,8 @@ namespace Knoema.Localization.Mvc
 	{
 		public string R(string text, params object[] formatterArguments)
 		{
+			LocalizationManager.Instance.InsertScope(VirtualPathUtility.ToAppRelative(VirtualPath).ToLowerInvariant());
+
 			if (CultureInfo.CurrentCulture.LCID == DefaultCulture.Value.LCID)
 				return text;
 
@@ -50,7 +52,7 @@ namespace Knoema.Localization.Mvc
 
 		public MvcHtmlString RenderLocalizationIncludes(bool admin)
 		{
-			return MvcHtmlString.Create(LocalizationHandler.RenderIncludes(admin));
+			return MvcHtmlString.Create(LocalizationHandler.RenderIncludes(admin, LocalizationManager.Instance.GetScope()));
 		}
 	}
 }

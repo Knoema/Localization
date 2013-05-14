@@ -2,6 +2,11 @@
 	$.extend({
 		localize: function (text, scope) {
 				
+			if(localizationScope){
+				if($.inArray(scope.toLowerCase(), localizationScope) == -1)
+					localizationScope.push(scope.toLowerCase())
+			};
+
 			if ({ignoreLocalization})
 				return text;
 
