@@ -212,6 +212,9 @@ namespace Knoema.Localization
 
 		public void InsertScope(string path)
 		{
+			if (HttpContext.Current == null)
+				return;
+
 			var scope = HttpContext.Current.Items["localizationScope"] as List<string> ?? new List<string>();
 
 			if (!scope.Contains(path))
@@ -222,6 +225,9 @@ namespace Knoema.Localization
 
 		public List<string> GetScope()
 		{
+			if (HttpContext.Current == null)
+				return null;
+
 			return HttpContext.Current.Items["localizationScope"] as List<string>;
 		}
 
