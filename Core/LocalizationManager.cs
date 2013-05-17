@@ -37,7 +37,7 @@ namespace Knoema.Localization
 			if (string.IsNullOrEmpty(text))
 				throw new ArgumentNullException("Text cannot be null.");
 
-			var hash = GetHash(scope.ToLower() + text);
+			var hash = GetHash(scope.ToLowerInvariant() + text);
 
 			// get object from cache...
 			var obj = GetLocalizedObject(CultureInfo.CurrentCulture, hash);
@@ -193,9 +193,9 @@ namespace Knoema.Localization
 		public IEnumerable<ILocalizedObject> GetLocalizedObjects(CultureInfo culture, string text, bool strict = true)
 		{
 			if(strict)
-				return GetAll(culture).Where(x => x.Text.ToLower() == text.ToLower());
+				return GetAll(culture).Where(x => x.Text.ToLowerInvariant() == text.ToLowerInvariant());
 			else
-				return GetAll(culture).Where(x => x.Text.ToLower().Contains(text.ToLower()));
+				return GetAll(culture).Where(x => x.Text.ToLowerInvariant().Contains(text.ToLowerInvariant()));
 		}
 
 		public void SetCulture(CultureInfo culture)

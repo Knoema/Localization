@@ -20,7 +20,7 @@ namespace Knoema.Localization.Web
 		public static string RenderIncludes(bool admin, List<string> scope)
 		{
 			var include = GetResource(GetResourcePath("include.html"));
-			include = include.Replace("{admin}", admin.ToString().ToLower());
+			include = include.Replace("{admin}", admin.ToString().ToLowerInvariant());
 			
 			include = include.Replace("{localizationScope}",
 				scope == null 
@@ -381,7 +381,7 @@ namespace Knoema.Localization.Web
 
 					path = path.Remove(path.LastIndexOf("/"));
 
-					var node = tree.FirstOrDefault(x => x.Scope.ToLower() == path.ToLower());
+					var node = tree.FirstOrDefault(x => x.Scope.ToLowerInvariant() == path.ToLowerInvariant());
 					if (node == null)
 					{
 						node = new TreeNode(labels[i], path, i == 0, true);						
@@ -393,7 +393,7 @@ namespace Knoema.Localization.Web
 
 					if (i > 0)
 					{
-						var parent = tree.FirstOrDefault(x => x.Scope.ToLower() == path.Remove(path.LastIndexOf("/")).ToLower());
+						var parent = tree.FirstOrDefault(x => x.Scope.ToLowerInvariant() == path.Remove(path.LastIndexOf("/")).ToLowerInvariant());
 						if (!parent.Children.Contains(node))						
 							parent.Children.Add(node);						
 					}
