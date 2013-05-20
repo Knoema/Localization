@@ -37,6 +37,11 @@ namespace Knoema.Localization
 			if (string.IsNullOrEmpty(text))
 				throw new ArgumentNullException("Text cannot be null.");
 
+			var cultures = GetCultures().ToList();
+
+			if (cultures.Count > 0 && !cultures.Contains(CultureInfo.CurrentCulture))
+				return null;
+
 			var hash = GetHash(scope.ToLowerInvariant() + text);
 
 			// get object from cache...
@@ -45,8 +50,6 @@ namespace Knoema.Localization
 			// if null save object to db for all cultures 
 			if (obj == null)
 			{
-				var cultures = GetCultures().ToList();
-
 				if (!cultures.Contains(DefaultCulture.Value))
 					cultures.Add(DefaultCulture.Value);
 
@@ -106,6 +109,9 @@ namespace Knoema.Localization
 
 		public IEnumerable<ILocalizedObject> GetScriptResources(CultureInfo culture)
 		{
+			if (!GetCultures().Contains(culture))
+				return Enumerable.Empty<ILocalizedObject>();
+
 			return GetAll(culture).Where(x => (x.Scope != null) && (x.Scope.EndsWith("js") || x.Scope.EndsWith("htm")));
 		}
 
