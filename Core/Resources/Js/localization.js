@@ -122,14 +122,15 @@ var localization = (function ($) {
 
 		culture.empty();
 
+		var currentCulture = '{currentCulture}';
+		
 		culture._busy(
 			$.getJSON('{appPath}/_localization/api/cultures', function (result) {
 
 				if (result.length > 0) {
 					$.each(result, function () {
-						$(buildHtml('option', this.toString(), { 'value': this.toString() })).appendTo(culture);
+						$(buildHtml('option', this.toString(), { 'value': this.toString(), 'selected': this.toString() == currentCulture })).appendTo(culture);
 					});
-
 					tree(culture.val());
 				}
 				else
@@ -263,36 +264,63 @@ var localization = (function ($) {
 		// resources
 		for (var i = 0; i < result.length; i++) {
 
-			var row = $(buildHtml('tr')).appendTo(table);
-			$(buildHtml('td', result[i].Text, { 'class': 'text' })).appendTo(row);
-			$(buildHtml('td', result[i].Translation, { 'class': 'translation' })).appendTo(row);
+			var display = '_DisplayName';
+			var reqired = '_RequiredAttribute';
+			var regularExp = '_RegularExpressionAttribute';
+			var strLength = '_StringLengthAttribute';
+			var compare = '_CompareAttribute';
+			var dataType = '_DataTypeAttribute';
 
-			var op = $(buildHtml('td', { 'class': 'op' })).appendTo(row);
+			var text = result[i].Text;
 
-			var edit = $(buildHtml('a', 'Edit', {
-				'href': '#',
-				'key': result[i].Key,
-				'prev': i == 0 ? '' : result[i - 1].Key,
-				'next': i + 1 == result.length ? '' : result[i + 1].Key,
-				'scope': result[i].Scope
-			})).appendTo(op)
+			if (text.indexOf(display) > -1)
+				text = text.replace(display, '');
 
-			op.append('&nbsp;');
+			if (text.indexOf(reqired) > -1)
+				text = text.replace(reqired, ' (reqired message)');
 
-			var del = $(buildHtml('a', 'Delete', {
-				'href': '#',
-				'key': result[i].Key
-			})).appendTo(op);
+			if (text.indexOf(regularExp) > -1)
+				text = text.replace(regularExp, ' (reqired validation message)');
 
-			edit.click(function () {
-				editTranslation($(this).attr('key'));
-				return false;
-			});
+			if (text.indexOf(strLength) > -1)
+				text = text.replace(strLength, ' (string length validation message)');
 
-			del.click(function () {
-				deleteTranslation($(this).attr('key'));
-				return false;
-			});
+			if (text.indexOf(compare) > -1)
+				text = text.replace(compare, ' (compare field validation message)');
+
+			if (text.indexOf(dataType) == -1) {
+
+				var row = $(buildHtml('tr')).appendTo(table);
+				$(buildHtml('td', text, { 'class': 'text' })).appendTo(row);
+				$(buildHtml('td', result[i].Translation, { 'class': 'translation' })).appendTo(row);
+
+				var op = $(buildHtml('td', { 'class': 'op' })).appendTo(row);
+
+				var edit = $(buildHtml('a', 'Edit', {
+					'href': '#',
+					'key': result[i].Key,
+					'prev': i == 0 ? '' : result[i - 1].Key,
+					'next': i + 1 == result.length ? '' : result[i + 1].Key,
+					'scope': result[i].Scope
+				})).appendTo(op)
+
+				op.append('&nbsp;');
+
+				var del = $(buildHtml('a', 'Delete', {
+					'href': '#',
+					'key': result[i].Key
+				})).appendTo(op);
+
+				edit.click(function () {
+					editTranslation($(this).attr('key'));
+					return false;
+				});
+
+				del.click(function () {
+					deleteTranslation($(this).attr('key'));
+					return false;
+				});
+			};
 		};
 	};
 

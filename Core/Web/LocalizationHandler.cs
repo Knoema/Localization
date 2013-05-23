@@ -216,17 +216,30 @@ namespace Knoema.Localization.Web
 			{
 				case ".js":
 					response.ContentType = "application/javascript";
-					output = GetResource(path);
+					output = GetResource(path).Replace("{appPath}", GetAppPath()).Replace("{currentCulture}", CultureInfo.CurrentCulture.Name);
 
-					if (LocalizationManager.Repository == null || CultureInfo.CurrentCulture.LCID == DefaultCulture.Value.LCID)
+					if (LocalizationManager.Repository == null)
+					{
 						output = output.Replace("{ignoreLocalization}", "true");
-					else					
-						output = output
-							.Replace("{data}", HttpUtility.JavaScriptStringEncode(new JavaScriptSerializer().Serialize(
+						break;
+					}
+					
+					if(CultureInfo.CurrentCulture.LCID == DefaultCulture.Value.LCID)
+					{
+						output = output.Replace("{ignoreLocalization}", "true");
+						break;
+					}
+
+					var cultures = LocalizationManager.Repository.GetCultures().ToList();					
+					if (cultures.Count > 0 && !cultures.Contains(CultureInfo.CurrentCulture))
+					{
+						output = output.Replace("{ignoreLocalization}", "true");
+						break;
+					}				
+					
+					output = output.Replace("{data}", HttpUtility.JavaScriptStringEncode(new JavaScriptSerializer().Serialize(
 								_manager.GetScriptResources(CultureInfo.CurrentCulture))))
 							.Replace("{ignoreLocalization}", "false");
-					
-					output = output.Replace("{appPath}", GetAppPath());
 
 					break;
 				case ".css":
@@ -266,10 +279,10 @@ namespace Knoema.Localization.Web
 				case ".js":
 					if (path.EndsWith("jquery-localize.js") && LocalizationManager.Repository != null)
 						hash = GetStringHash(
-							new JavaScriptSerializer().Serialize(
+							CultureInfo.CurrentCulture.Name + new JavaScriptSerializer().Serialize(
 								LocalizationManager.Instance.GetScriptResources(CultureInfo.CurrentCulture)));
 					else
-						hash = GetStreamHash(GetResourceStream(path));
+						hash = GetStringHash(CultureInfo.CurrentCulture.Name + GetStreamHash(GetResourceStream(path)));
 					break;
 				case ".css":
 					hash = GetStreamHash(GetResourceStream(path));
