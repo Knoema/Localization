@@ -230,7 +230,7 @@ namespace Knoema.Localization.Web
 						break;
 					}
 
-					var cultures = LocalizationManager.Repository.GetCultures().ToList();					
+					var cultures = LocalizationManager.Instance.GetCultures().ToList();					
 					if (cultures.Count > 0 && !cultures.Contains(CultureInfo.CurrentCulture))
 					{
 						output = output.Replace("{ignoreLocalization}", "true");
