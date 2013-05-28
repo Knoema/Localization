@@ -264,64 +264,40 @@ var localization = (function ($) {
 		// resources
 		for (var i = 0; i < result.length; i++) {
 
-			var display = '_DisplayName';
-			var reqired = '_RequiredAttribute';
-			var regularExp = '_RegularExpressionAttribute';
-			var strLength = '_StringLengthAttribute';
-			var compare = '_CompareAttribute';
-			var dataType = '_DataTypeAttribute';
-
 			var text = result[i].Text;
 
-			if (text.indexOf(display) > -1)
-				text = text.replace(display, '');
+			var row = $(buildHtml('tr')).appendTo(table);
+			$(buildHtml('td', text, { 'class': 'text' })).appendTo(row);
+			$(buildHtml('td', result[i].Translation, { 'class': 'translation' })).appendTo(row);
 
-			if (text.indexOf(reqired) > -1)
-				text = text.replace(reqired, ' (reqired message)');
+			var op = $(buildHtml('td', { 'class': 'op' })).appendTo(row);
 
-			if (text.indexOf(regularExp) > -1)
-				text = text.replace(regularExp, ' (reqired validation message)');
+			var edit = $(buildHtml('a', 'Edit', {
+				'href': '#',
+				'key': result[i].Key,
+				'prev': i == 0 ? '' : result[i - 1].Key,
+				'next': i + 1 == result.length ? '' : result[i + 1].Key,
+				'scope': result[i].Scope
+			})).appendTo(op)
 
-			if (text.indexOf(strLength) > -1)
-				text = text.replace(strLength, ' (string length validation message)');
+			op.append('&nbsp;');
 
-			if (text.indexOf(compare) > -1)
-				text = text.replace(compare, ' (compare field validation message)');
+			var del = $(buildHtml('a', 'Delete', {
+				'href': '#',
+				'key': result[i].Key
+			})).appendTo(op);
 
-			if (text.indexOf(dataType) == -1) {
+			edit.click(function () {
+				editTranslation($(this).attr('key'));
+				return false;
+			});
 
-				var row = $(buildHtml('tr')).appendTo(table);
-				$(buildHtml('td', text, { 'class': 'text' })).appendTo(row);
-				$(buildHtml('td', result[i].Translation, { 'class': 'translation' })).appendTo(row);
-
-				var op = $(buildHtml('td', { 'class': 'op' })).appendTo(row);
-
-				var edit = $(buildHtml('a', 'Edit', {
-					'href': '#',
-					'key': result[i].Key,
-					'prev': i == 0 ? '' : result[i - 1].Key,
-					'next': i + 1 == result.length ? '' : result[i + 1].Key,
-					'scope': result[i].Scope
-				})).appendTo(op)
-
-				op.append('&nbsp;');
-
-				var del = $(buildHtml('a', 'Delete', {
-					'href': '#',
-					'key': result[i].Key
-				})).appendTo(op);
-
-				edit.click(function () {
-					editTranslation($(this).attr('key'));
-					return false;
-				});
-
-				del.click(function () {
-					deleteTranslation($(this).attr('key'));
-					return false;
-				});
-			};
+			del.click(function () {
+				deleteTranslation($(this).attr('key'));
+				return false;
+			});
 		};
+	
 	};
 
 	var table = function (culture, scope) {
