@@ -13,7 +13,8 @@ namespace Knoema.Localization
 {
 	public sealed class LocalizationManager
 	{
-		public const string CookieName = "localization-current-lang";
+		public const string CookieName = "current-lang";
+		public const string QueryParameter = "lang";
 
 		private static object _lock = new object();
 		public static ILocalizationRepository Repository { get; set; }
@@ -25,7 +26,7 @@ namespace Knoema.Localization
 			{
 				return _instanse;
 			}
-		}		
+		}
 
 		private LocalizationManager() { }
 
@@ -198,7 +199,7 @@ namespace Knoema.Localization
 
 		public IEnumerable<ILocalizedObject> GetLocalizedObjects(CultureInfo culture, string text, bool strict = true)
 		{
-			if(strict)
+			if (strict)
 				return GetAll(culture).Where(x => x.Text.ToLowerInvariant() == text.ToLowerInvariant());
 			else
 				return GetAll(culture).Where(x => x.Text.ToLowerInvariant().Contains(text.ToLowerInvariant()));
@@ -214,6 +215,35 @@ namespace Knoema.Localization
 					Expires = DateTime.Now.AddYears(1),
 				});
 			}
+		}
+
+		public IList<CultureInfo> GetUserCultures()
+		{
+			var cultures = new List<CultureInfo>();
+			
+			if (HttpContext.Current == null)
+				return cultures;
+
+			var query = HttpContext.Current.Request.QueryString[LocalizationManager.QueryParameter];
+			if (query != null)
+				cultures.Add(new CultureInfo(query));			
+
+			var cookie = HttpContext.Current.Request.Cookies[LocalizationManager.CookieName];
+			if (cookie != null)
+				cultures.Add(new CultureInfo(cookie.Value)); 
+
+			var browser = HttpContext.Current.Request.UserLanguages;
+			if (browser != null)			
+				foreach(var culture in browser)
+				{
+					var lang = culture.IndexOf(';') > -1 
+						? culture.Split(';')[0] 
+						: culture;
+
+					cultures.Add(new CultureInfo(lang));
+				}		
+						
+			return cultures.Distinct().ToList();
 		}
 
 		public void InsertScope(string path)
