@@ -217,20 +217,20 @@ namespace Knoema.Localization
 			}
 		}
 
-		public IList<CultureInfo> GetUserCultures()
+		public IList<string> GetUserCultures()
 		{
-			var cultures = new List<CultureInfo>();
+			var cultures = new List<string>();
 			
 			if (HttpContext.Current == null)
 				return cultures;
 
 			var query = HttpContext.Current.Request.QueryString[LocalizationManager.QueryParameter];
 			if (query != null)
-				cultures.Add(new CultureInfo(query));			
+				cultures.Add(query);			
 
 			var cookie = HttpContext.Current.Request.Cookies[LocalizationManager.CookieName];
 			if (cookie != null)
-				cultures.Add(new CultureInfo(cookie.Value)); 
+				cultures.Add(cookie.Value); 
 
 			var browser = HttpContext.Current.Request.UserLanguages;
 			if (browser != null)			
@@ -240,7 +240,7 @@ namespace Knoema.Localization
 						? culture.Split(';')[0] 
 						: culture;
 
-					cultures.Add(new CultureInfo(lang));
+					cultures.Add(lang);
 				}		
 						
 			return cultures.Distinct().ToList();
