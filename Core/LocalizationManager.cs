@@ -98,6 +98,9 @@ namespace Knoema.Localization
 
 		public ILocalizedObject Get(int key)
 		{
+			if(!LocalizationCache.Available)
+				return Repository.Get(key);
+
 			var obj = LocalizationCache.Get<ILocalizedObject>(key.ToString());
 			if (obj == null)
 			{
@@ -118,6 +121,9 @@ namespace Knoema.Localization
 
 		public IEnumerable<ILocalizedObject> GetAll(CultureInfo culture)
 		{
+			if(!LocalizationCache.Available)
+				return Repository.GetAll(culture).ToList();
+
 			var lst = LocalizationCache.Get<IEnumerable<ILocalizedObject>>(culture.Name);
 			if (lst == null || lst.Count() == 0)
 			{
@@ -130,6 +136,9 @@ namespace Knoema.Localization
 
 		public IEnumerable<CultureInfo> GetCultures()
 		{
+			if(!LocalizationCache.Available)
+				return Repository.GetCultures().ToList();
+
 			var lst = LocalizationCache.Get<IEnumerable<CultureInfo>>("cultures");
 			if (lst == null || lst.Count() == 0)
 			{
@@ -146,7 +155,8 @@ namespace Knoema.Localization
 			Repository.Delete(list);
 
 			// clear cache 
-			LocalizationCache.Clear();
+			if (LocalizationCache.Available)
+				LocalizationCache.Clear();
 		}
 
 		public void Save(params ILocalizedObject[] list)
@@ -154,7 +164,8 @@ namespace Knoema.Localization
 			Repository.Save(list);
 
 			// clear cache 
-			LocalizationCache.Clear();
+			if (LocalizationCache.Available)
+				LocalizationCache.Clear();
 		}
 
 		public void Import(params ILocalizedObject[] list)

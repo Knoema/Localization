@@ -10,6 +10,14 @@ namespace Knoema.Localization
 	{
 		private const string _region = "Localization";
 
+		public static bool Available
+		{
+			get
+			{
+				return HttpContext.Current != null && HttpContext.Current.Cache != null;
+			}
+		}
+
 		public static T Get<T>(string key)
 		{
 			return (T)HttpContext.Current.Cache.Get(_region + key);
