@@ -9,7 +9,7 @@ namespace Knoema.Localization.Mvc
 	{
 		public string R(string text, params object[] formatterArguments)
 		{
-			if (CultureInfo.CurrentCulture.LCID == DefaultCulture.Value.LCID)
+			if (CultureInfo.CurrentCulture.IsDefault())
 				return text;
 
 			if (LocalizationManager.Repository == null)
@@ -35,7 +35,7 @@ namespace Knoema.Localization.Mvc
 		{
 			LocalizationManager.Instance.InsertScope(VirtualPathUtility.ToAppRelative(VirtualPath).ToLowerInvariant());
 
-			if (CultureInfo.CurrentCulture.LCID == DefaultCulture.Value.LCID)
+			if (CultureInfo.CurrentCulture.IsDefault())
 				return text;
 
 			if (LocalizationManager.Repository == null)

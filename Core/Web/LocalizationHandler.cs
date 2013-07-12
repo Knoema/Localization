@@ -176,7 +176,7 @@ namespace Knoema.Localization.Web
 				case "push":
 					if (string.IsNullOrEmpty(query["scope"]) || string.IsNullOrEmpty(query["text"]))
 						BadRequest(context);
-					else if (CultureInfo.CurrentCulture.LCID != DefaultCulture.Value.LCID)
+					else if (!LocalizationManager.Instance.GetCulture().IsDefault())
 						_manager.Translate(query["scope"], query["text"]);					
 					break;
 				case "hint":
@@ -215,30 +215,33 @@ namespace Knoema.Localization.Web
 			switch (Path.GetExtension(path))
 			{
 				case ".js":
+
+					var current =LocalizationManager.Instance.GetCulture();
+
 					response.ContentType = "application/javascript";
-					output = GetResource(path).Replace("{appPath}", GetAppPath()).Replace("{currentCulture}", CultureInfo.CurrentCulture.Name);
+					output = GetResource(path).Replace("{appPath}", GetAppPath()).Replace("{currentCulture}", current);
 
 					if (LocalizationManager.Repository == null)
 					{
 						output = output.Replace("{ignoreLocalization}", "true");
 						break;
 					}
-					
-					if(CultureInfo.CurrentCulture.LCID == DefaultCulture.Value.LCID)
+
+					if (current.IsDefault())
 					{
 						output = output.Replace("{ignoreLocalization}", "true");
 						break;
 					}
 
-					var cultures = LocalizationManager.Instance.GetCultures().ToList();					
-					if (cultures.Count > 0 && !cultures.Contains(CultureInfo.CurrentCulture))
+					var cultures = LocalizationManager.Instance.GetCultures().ToList();
+					if (cultures.Count > 0 && !cultures.Contains(new CultureInfo(current)))
 					{
 						output = output.Replace("{ignoreLocalization}", "true");
 						break;
 					}				
 					
 					output = output.Replace("{data}", HttpUtility.JavaScriptStringEncode(new JavaScriptSerializer().Serialize(
-								_manager.GetScriptResources(CultureInfo.CurrentCulture))))
+								_manager.GetScriptResources(new CultureInfo(current)))))
 							.Replace("{ignoreLocalization}", "false");
 
 					break;
@@ -277,12 +280,15 @@ namespace Knoema.Localization.Web
 			switch (Path.GetExtension(path).ToLowerInvariant())
 			{
 				case ".js":
+				
+					var current = LocalizationManager.Instance.GetCulture();
+
 					if (path.EndsWith("jquery-localize.js") && LocalizationManager.Repository != null)
 						hash = GetStringHash(
-							CultureInfo.CurrentCulture.Name + new JavaScriptSerializer().Serialize(
-								LocalizationManager.Instance.GetScriptResources(CultureInfo.CurrentCulture)));
+							current + new JavaScriptSerializer().Serialize(
+								LocalizationManager.Instance.GetScriptResources(new CultureInfo(current))));
 					else
-						hash = GetStringHash(CultureInfo.CurrentCulture.Name + GetStreamHash(GetResourceStream(path)));
+						hash = GetStringHash(current + GetStreamHash(GetResourceStream(path)));
 					break;
 				case ".css":
 					hash = GetStreamHash(GetResourceStream(path));

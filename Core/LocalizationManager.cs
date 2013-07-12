@@ -217,15 +217,23 @@ namespace Knoema.Localization
 		}
 
 		public void SetCulture(CultureInfo culture)
-		{
-			if (CultureInfo.CurrentCulture.LCID != culture.LCID)
+		{			
+			Thread.CurrentThread.CurrentCulture = Thread.CurrentThread.CurrentUICulture = culture;
+			HttpContext.Current.Response.Cookies.Add(new HttpCookie(CookieName, culture.Name)
 			{
-				Thread.CurrentThread.CurrentCulture = Thread.CurrentThread.CurrentUICulture = culture;
-				HttpContext.Current.Response.Cookies.Add(new HttpCookie(CookieName, culture.Name)
-				{
-					Expires = DateTime.Now.AddYears(1),
-				});
-			}
+				Expires = DateTime.Now.AddYears(1),
+			});
+		}	
+
+		public string GetCulture()
+		{
+			if (HttpContext.Current == null)
+				return DefaultCulture.Value.Name;
+
+			if(HttpContext.Current.Request.Cookies[LocalizationManager.CookieName] == null)
+				return DefaultCulture.Value.Name;
+
+			return HttpContext.Current.Request.Cookies[LocalizationManager.CookieName].Value;
 		}
 
 		public IList<string> GetUserCultures()
