@@ -129,6 +129,17 @@ namespace Knoema.Localization.Web
 						_manager.Delete(delete);
 					break;
 
+				case "cleardb":
+					_manager.ClearDB();
+					break;
+
+				case "disable":
+					var disable = _manager.Get(int.Parse(query["id"]));
+					if (disable != null)
+						_manager.Disable(disable);
+					response = disable.Translation;
+					break;
+
 				case "create":
 					try
 					{

@@ -108,6 +108,16 @@ var localization = (function ($) {
 						});
 					});
 				});
+
+				container.find('input#cleardb').click(function () {
+					$.ajax({
+						type: 'POST',
+						url: '{appPath}/_localization/api/cleardb',
+						success: function () {
+							container.find('#status label').text('DB was cleared.');
+						}
+					})
+				});
 			})
 		);
 	};
@@ -293,7 +303,7 @@ var localization = (function ($) {
 			});
 
 			del.click(function () {
-				deleteTranslation($(this).attr('key'));
+				disableTranslation($(this).attr('key'));
 				return false;
 			});
 		};
@@ -332,7 +342,6 @@ var localization = (function ($) {
 			);
 		};
 	};
-
 
 	var editTranslation = function (id) {
 
@@ -474,14 +483,15 @@ var localization = (function ($) {
 		);
 	};
 
-	var deleteTranslation = function (id) {
-
+	var disableTranslation = function (id) {
 		$.ajax({
 			type: 'POST',
-			url: '{appPath}/_localization/api/delete',
+			url: '{appPath}/_localization/api/disable',
 			data: 'id=' + id,
-			success: function () {
-				$('a[key="' + id + '"]').closest("tr").hide('fast');
+			success: function (result) {
+				console.info(result)
+				if(result)
+					$('a[key="' + id + '"]').closest('tr').find('td.translation').text(result);
 			}
 		});
 	};
@@ -498,7 +508,7 @@ var localization = (function ($) {
 
 	var buildHtml = function (tag, html, attrs) {
 
-		if (typeof (html) != 'string') {
+		if (typeof (html) != 'string' && html) {
 			attrs = html;
 			html = null;
 		};

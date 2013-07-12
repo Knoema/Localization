@@ -46,7 +46,7 @@ namespace Knoema.Localization
 			var hash = GetHash(scope.ToLowerInvariant() + text);
 
 			// get object from cache...
-			var obj = GetLocalizedObject(CultureInfo.CurrentCulture, hash);
+			var obj = GetLocalizedObject(CultureInfo.CurrentCulture, hash, true);
 
 			// if null save object to db for all cultures 
 			if (obj == null)
@@ -58,7 +58,7 @@ namespace Knoema.Localization
 				{
 					lock (_lock)
 					{
-						var stored = GetLocalizedObject(culture, hash);
+						var stored = GetLocalizedObject(culture, hash, true);
 						if (stored == null)
 							Save(Create(hash, culture.LCID, scope, text));
 					}
@@ -96,7 +96,7 @@ namespace Knoema.Localization
 			return result;
 		}
 
-		public ILocalizedObject Get(int key)
+		public ILocalizedObject Get(int key, bool ignoreDisabled = false)
 		{
 			var obj = LocalizationCache.Get<ILocalizedObject>(key.ToString());
 			if (obj == null)
@@ -104,6 +104,9 @@ namespace Knoema.Localization
 				obj = Repository.Get(key);
 				LocalizationCache.Insert(key.ToString(), obj);
 			}
+
+			if (ignoreDisabled && obj.IsDisabled)
+				return null;
 
 			return obj;
 		}
@@ -116,7 +119,7 @@ namespace Knoema.Localization
 			return GetAll(culture).Where(x => (x.Scope != null) && (x.Scope.EndsWith("js") || x.Scope.EndsWith("htm")));
 		}
 
-		public IEnumerable<ILocalizedObject> GetAll(CultureInfo culture)
+		public IEnumerable<ILocalizedObject> GetAll(CultureInfo culture, bool ignoreDisabled = false)
 		{
 			var lst = LocalizationCache.Get<IEnumerable<ILocalizedObject>>(culture.Name);
 			if (lst == null || lst.Count() == 0)
@@ -124,6 +127,9 @@ namespace Knoema.Localization
 				lst = Repository.GetAll(culture).ToList();
 				LocalizationCache.Insert(culture.Name, lst);
 			}
+
+			if (ignoreDisabled)
+				lst = lst.Where(obj => !obj.IsDisabled);
 
 			return lst;
 		}
@@ -140,10 +146,36 @@ namespace Knoema.Localization
 			return lst;
 		}
 
-
 		public void Delete(params ILocalizedObject[] list)
 		{
 			Repository.Delete(list);
+
+			// clear cache 
+			LocalizationCache.Clear();
+		}
+
+		public void ClearDB(CultureInfo culture = null)
+		{
+			var disabled = new List<ILocalizedObject>();
+			if(culture == null)
+			{
+				foreach (var item in GetCultures())
+					disabled.AddRange(GetAll(item).Where(obj => obj.IsDisabled));
+			}
+			else
+			{
+				disabled = Repository.GetAll(culture).Where(obj => obj.IsDisabled).ToList();
+			}
+
+			Delete(disabled.ToArray());
+		}
+
+		public void Disable(params ILocalizedObject[] list)
+		{
+			foreach (var obj in list)
+				obj.Disable();
+
+			Repository.Save(list);
 
 			// clear cache 
 			LocalizationCache.Clear();
@@ -267,9 +299,9 @@ namespace Knoema.Localization
 			return HttpContext.Current.Items["localizationScope"] as List<string>;
 		}
 
-		private ILocalizedObject GetLocalizedObject(CultureInfo culture, string hash)
+		private ILocalizedObject GetLocalizedObject(CultureInfo culture, string hash, bool ignoreDeleted = false)
 		{
-			return GetAll(culture).FirstOrDefault(x => x.Hash == hash);
+			return GetAll(culture, ignoreDeleted).FirstOrDefault(x => x.Hash == hash);
 		}
 
 		private string GetHash(string text)

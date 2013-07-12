@@ -9,5 +9,7 @@ namespace Knoema.Localization
 		string Text { get; set; }
 		string Hash { get; set; }
 		string Translation { get; set; }
+		void Disable();
+		bool IsDisabled { get; }
 	}
 }

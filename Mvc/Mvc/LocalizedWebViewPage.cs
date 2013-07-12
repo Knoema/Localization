@@ -41,8 +41,7 @@ namespace Knoema.Localization.Mvc
 			if (LocalizationManager.Repository == null)
 				return text;
 
-			var translation = LocalizationManager.Instance.Translate(
-				VirtualPathUtility.ToAppRelative(VirtualPath), text);
+			var translation = LocalizationManager.Instance.Translate(VirtualPathUtility.ToAppRelative(VirtualPath), text);
 			
 			if (string.IsNullOrEmpty(translation))
 				translation = text;
