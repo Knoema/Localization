@@ -17,8 +17,8 @@ namespace Knoema.Localization.Mvc
 
 			if (containerType.GetCustomAttributes(typeof(LocalizedAttribute), true).Length == 0)
 				return metadata;
-			
-			if (CultureInfo.CurrentCulture.LCID == DefaultCulture.Value.LCID)
+
+			if (CultureInfo.CurrentCulture.IsDefault())
 				return metadata;
 		
 			var obj = LocalizationManager.Instance.FormatScope(containerType);

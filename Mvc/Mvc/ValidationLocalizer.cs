@@ -21,9 +21,9 @@ namespace Knoema.Localization.Mvc
 		protected override IEnumerable<ModelValidator> GetValidators(ModelMetadata metadata, ControllerContext context,	IEnumerable<Attribute> attributes)
 		{			
 			if (metadata.ContainerType == null)
-				return base.GetValidators(metadata, context, attributes);			
+				return base.GetValidators(metadata, context, attributes);
 
-			if (CultureInfo.CurrentCulture.LCID == DefaultCulture.Value.LCID)
+			if (CultureInfo.CurrentCulture.IsDefault())
 				return base.GetValidators(metadata, context, attributes);	
 
 			if (metadata.ContainerType.GetCustomAttributes(typeof(LocalizedAttribute), true).Length == 0)

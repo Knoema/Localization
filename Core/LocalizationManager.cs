@@ -98,6 +98,9 @@ namespace Knoema.Localization
 
 		public ILocalizedObject Get(int key, bool ignoreDisabled = false)
 		{
+			if(!LocalizationCache.Available)
+				return Repository.Get(key);
+
 			var obj = LocalizationCache.Get<ILocalizedObject>(key.ToString());
 			if (obj == null)
 			{
@@ -121,6 +124,9 @@ namespace Knoema.Localization
 
 		public IEnumerable<ILocalizedObject> GetAll(CultureInfo culture, bool ignoreDisabled = false)
 		{
+			if(!LocalizationCache.Available)
+				return Repository.GetAll(culture).ToList();
+
 			var lst = LocalizationCache.Get<IEnumerable<ILocalizedObject>>(culture.Name);
 			if (lst == null || lst.Count() == 0)
 			{
@@ -136,6 +142,9 @@ namespace Knoema.Localization
 
 		public IEnumerable<CultureInfo> GetCultures()
 		{
+			if(!LocalizationCache.Available)
+				return Repository.GetCultures().ToList();
+
 			var lst = LocalizationCache.Get<IEnumerable<CultureInfo>>("cultures");
 			if (lst == null || lst.Count() == 0)
 			{
@@ -151,7 +160,8 @@ namespace Knoema.Localization
 			Repository.Delete(list);
 
 			// clear cache 
-			LocalizationCache.Clear();
+			if (LocalizationCache.Available)
+				LocalizationCache.Clear();
 		}
 
 		public void ClearDB(CultureInfo culture = null)
@@ -186,7 +196,8 @@ namespace Knoema.Localization
 			Repository.Save(list);
 
 			// clear cache 
-			LocalizationCache.Clear();
+			if (LocalizationCache.Available)
+				LocalizationCache.Clear();
 		}
 
 		public void Import(params ILocalizedObject[] list)
@@ -238,31 +249,39 @@ namespace Knoema.Localization
 		}
 
 		public void SetCulture(CultureInfo culture)
-		{
-			if (CultureInfo.CurrentCulture.LCID != culture.LCID)
+		{			
+			Thread.CurrentThread.CurrentCulture = Thread.CurrentThread.CurrentUICulture = culture;
+			HttpContext.Current.Response.Cookies.Add(new HttpCookie(CookieName, culture.Name)
 			{
-				Thread.CurrentThread.CurrentCulture = Thread.CurrentThread.CurrentUICulture = culture;
-				HttpContext.Current.Response.Cookies.Add(new HttpCookie(CookieName, culture.Name)
-				{
-					Expires = DateTime.Now.AddYears(1),
-				});
-			}
+				Expires = DateTime.Now.AddYears(1),
+			});
+		}	
+
+		public string GetCulture()
+		{
+			if (HttpContext.Current == null)
+				return DefaultCulture.Value.Name;
+
+			if(HttpContext.Current.Request.Cookies[LocalizationManager.CookieName] == null)
+				return DefaultCulture.Value.Name;
+
+			return HttpContext.Current.Request.Cookies[LocalizationManager.CookieName].Value;
 		}
 
-		public IList<CultureInfo> GetUserCultures()
+		public IList<string> GetUserCultures()
 		{
-			var cultures = new List<CultureInfo>();
+			var cultures = new List<string>();
 			
 			if (HttpContext.Current == null)
 				return cultures;
 
 			var query = HttpContext.Current.Request.QueryString[LocalizationManager.QueryParameter];
 			if (query != null)
-				cultures.Add(new CultureInfo(query));			
+				cultures.Add(query);			
 
 			var cookie = HttpContext.Current.Request.Cookies[LocalizationManager.CookieName];
 			if (cookie != null)
-				cultures.Add(new CultureInfo(cookie.Value)); 
+				cultures.Add(cookie.Value); 
 
 			var browser = HttpContext.Current.Request.UserLanguages;
 			if (browser != null)			
@@ -272,7 +291,7 @@ namespace Knoema.Localization
 						? culture.Split(';')[0] 
 						: culture;
 
-					cultures.Add(new CultureInfo(lang));
+					cultures.Add(lang);
 				}		
 						
 			return cultures.Distinct().ToList();

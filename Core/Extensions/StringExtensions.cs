@@ -15,7 +15,7 @@ namespace Knoema.Localization
 			if (type == null)
 				throw new ArgumentNullException();
 
-			if (CultureInfo.CurrentCulture.LCID == DefaultCulture.Value.LCID)
+			if (CultureInfo.CurrentCulture.IsDefault())
 				return value;
 
 			if (LocalizationManager.Repository == null)

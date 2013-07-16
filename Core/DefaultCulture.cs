@@ -9,5 +9,15 @@ namespace Knoema.Localization
 		{
 			get { return _culture; }
 		}
+
+		public static bool IsDefault(this string name)
+		{
+			return name == DefaultCulture.Value.Name;
+		}
+
+		public static bool IsDefault(this CultureInfo culture)
+		{
+			return culture.Name == DefaultCulture.Value.Name;
+		}
 	}
 }
