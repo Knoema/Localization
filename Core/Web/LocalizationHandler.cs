@@ -207,6 +207,23 @@ namespace Knoema.Localization.Web
 			return response;
 		}
 
+		static bool IgnoreLocalization()
+		{
+			if (LocalizationManager.Repository == null)
+				return true;
+			
+			var current = LocalizationManager.Instance.GetCulture();
+
+			if (current.IsDefault())
+				return true;
+
+			var cultures = LocalizationManager.Instance.GetCultures();
+			if (cultures.Count() > 0 && !cultures.Contains(new CultureInfo(current)))
+				return true;
+				
+			return false;		
+		}
+		
 		private string R(HttpContext context, string path)
 		{
 			var response = context.Response;
@@ -221,24 +238,11 @@ namespace Knoema.Localization.Web
 					response.ContentType = "application/javascript";
 					output = GetResource(path).Replace("{appPath}", GetAppPath()).Replace("{currentCulture}", current);
 
-					if (LocalizationManager.Repository == null)
+					if (IgnoreLocalization())
 					{
 						output = output.Replace("{ignoreLocalization}", "true");
 						break;
-					}
-
-					if (current.IsDefault())
-					{
-						output = output.Replace("{ignoreLocalization}", "true");
-						break;
-					}
-
-					var cultures = LocalizationManager.Instance.GetCultures().ToList();
-					if (cultures.Count > 0 && !cultures.Contains(new CultureInfo(current)))
-					{
-						output = output.Replace("{ignoreLocalization}", "true");
-						break;
-					}				
+					}						
 					
 					output = output.Replace("{data}", HttpUtility.JavaScriptStringEncode(new JavaScriptSerializer().Serialize(
 								_manager.GetScriptResources(new CultureInfo(current)))))
@@ -281,12 +285,12 @@ namespace Knoema.Localization.Web
 			{
 				case ".js":
 				
-					var current = LocalizationManager.Instance.GetCulture();
+					var current =  LocalizationManager.Instance.GetCulture();
+					var resources = LocalizationManager.Instance.GetScriptResources(new CultureInfo(current));
 
 					if (path.EndsWith("jquery-localize.js") && LocalizationManager.Repository != null)
 						hash = GetStringHash(
-							current + new JavaScriptSerializer().Serialize(
-								LocalizationManager.Instance.GetScriptResources(new CultureInfo(current))));
+							 IgnoreLocalization().ToString() + current + new JavaScriptSerializer().Serialize(resources));
 					else
 						hash = GetStringHash(current + GetStreamHash(GetResourceStream(path)));
 					break;
