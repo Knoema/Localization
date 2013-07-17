@@ -96,6 +96,9 @@
   <ItemGroup>
     <None Include="Knoema.Localization.Core.nuspec" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\Html\include-admin.html" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -223,17 +223,11 @@ namespace Knoema.Localization
 			{
 				Expires = DateTime.Now.AddYears(1),
 			});
-		}	
+		}
 
 		public string GetCulture()
 		{
-			if (HttpContext.Current == null)
-				return DefaultCulture.Value.Name;
-
-			if(HttpContext.Current.Request.Cookies[LocalizationManager.CookieName] == null)
-				return DefaultCulture.Value.Name;
-
-			return HttpContext.Current.Request.Cookies[LocalizationManager.CookieName].Value;
+			return Thread.CurrentThread.CurrentCulture.Name;
 		}
 
 		public IList<string> GetUserCultures()

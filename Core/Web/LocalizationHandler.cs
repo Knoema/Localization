@@ -20,13 +20,16 @@ namespace Knoema.Localization.Web
 		public static string RenderIncludes(bool admin, List<string> scope)
 		{
 			var include = GetResource(GetResourcePath("include.html"));
-			include = include.Replace("{admin}", admin.ToString().ToLowerInvariant());
-			
-			include = include.Replace("{localizationScope}",
-				scope == null 
-					? string.Empty 
-					: "'" + string.Join("','", scope) + "'"
-			);
+
+			if(admin)
+			{
+				include += GetResource(GetResourcePath("include-admin.html"));			
+				include = include.Replace("{localizationScope}",
+					scope == null 
+						? string.Empty 
+						: "'" + string.Join("','", scope) + "'"
+				);
+			}
 
 			var names = typeof(LocalizationHandler).Assembly.GetManifestResourceNames();
 			foreach (var n in names)
