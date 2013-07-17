@@ -1,11 +1,12 @@
-﻿(function ($) {
+﻿var _epli = _epli || false;
+var _epls = _epls || [];
+
+(function ($) {
 	$.extend({
 		localize: function (text, scope) {
 				
-			if(includeScope){
-				if($.inArray(scope.toLowerCase(), localizationScope) == -1)
-					localizationScope.push(scope.toLowerCase())
-			};
+			if (_epli) 
+				_epls.push(scope.toLowerCase());		
 
 			if ({ignoreLocalization})
 				return text;

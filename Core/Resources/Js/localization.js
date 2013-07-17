@@ -1,4 +1,5 @@
 ﻿'use strict'
+
 var localization = (function ($) {
 
 	var addButton = function () {
@@ -169,11 +170,17 @@ var localization = (function ($) {
 			container._busy(
 				$.getJSON('{appPath}/_localization/api/tree?culture=' + culture, function (result) {
 
-					if (localizationScope && localizationScope.length > 0) {
+					if (_epls.length > 0) {
+
+						var slist = [];
+						$.each(_epls, function () {
+							if ($.inArray(this, slist) == -1)
+								slist.push(this);
+						});
 
 						var scope = { Children: [], IsRoot: true, Label: 'Current page', Scope: '', Translated: false };
 
-						$.each(localizationScope, function () {
+						$.each(slist, function () {
 							scope.Children.push({
 								Children: [],
 								IsRoot: false,
