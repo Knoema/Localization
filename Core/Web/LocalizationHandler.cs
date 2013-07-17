@@ -280,19 +280,20 @@ namespace Knoema.Localization.Web
 		private static string GetResourceHash(string path)
 		{
 			var hash = string.Empty;
-
+			
 			switch (Path.GetExtension(path).ToLowerInvariant())
 			{
 				case ".js":
 				
 					var current =  LocalizationManager.Instance.GetCulture();
-					var resources = LocalizationManager.Instance.GetScriptResources(new CultureInfo(current));
+					var content = "1.44" + current;
 
-					if (path.EndsWith("jquery-localize.js") && LocalizationManager.Repository != null)
-						hash = GetStringHash(
-							 IgnoreLocalization().ToString() + current + new JavaScriptSerializer().Serialize(resources));
-					else
-						hash = GetStringHash(current + GetStreamHash(GetResourceStream(path)));
+					content += path.EndsWith("jquery-localize.js") && LocalizationManager.Repository != null
+						? new JavaScriptSerializer().Serialize(LocalizationManager.Instance.GetScriptResources(new CultureInfo(current)))
+						: GetStreamHash(GetResourceStream(path)); 
+
+					hash = GetStringHash(content);
+										
 					break;
 				case ".css":
 					hash = GetStreamHash(GetResourceStream(path));
