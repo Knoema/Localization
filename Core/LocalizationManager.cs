@@ -230,20 +230,12 @@ namespace Knoema.Localization
 			return Thread.CurrentThread.CurrentCulture.Name;
 		}
 
-		public IList<string> GetUserCultures()
+		public IList<string> GetBrowserCultures()
 		{
 			var cultures = new List<string>();
 			
 			if (HttpContext.Current == null)
-				return cultures;
-
-			var query = HttpContext.Current.Request.QueryString[LocalizationManager.QueryParameter];
-			if (query != null)
-				cultures.Add(query);			
-
-			var cookie = HttpContext.Current.Request.Cookies[LocalizationManager.CookieName];
-			if (cookie != null)
-				cultures.Add(cookie.Value); 
+				return cultures;		
 
 			var browser = HttpContext.Current.Request.UserLanguages;
 			if (browser != null)			
@@ -257,6 +249,21 @@ namespace Knoema.Localization
 				}		
 						
 			return cultures.Distinct().ToList();
+		}
+
+		public string GetCultureFromCookie()
+		{
+			var cookie = HttpContext.Current.Request.Cookies[LocalizationManager.CookieName];
+			
+			if (cookie != null)
+				return cookie.Value;
+
+			return null;
+		}
+
+		public string GetCultureFromQuery()
+		{
+			return HttpContext.Current.Request.QueryString[LocalizationManager.QueryParameter];		
 		}
 
 		public void InsertScope(string path)
