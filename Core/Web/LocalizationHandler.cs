@@ -20,13 +20,16 @@ namespace Knoema.Localization.Web
 		public static string RenderIncludes(bool admin, List<string> scope)
 		{
 			var include = GetResource(GetResourcePath("include.html"));
-			include = include.Replace("{admin}", admin.ToString().ToLowerInvariant());
-			
-			include = include.Replace("{localizationScope}",
-				scope == null 
-					? string.Empty 
-					: "'" + string.Join("','", scope) + "'"
-			);
+
+			if(admin)
+			{
+				include += GetResource(GetResourcePath("include-admin.html"));			
+				include = include.Replace("{localizationScope}",
+					scope == null 
+						? string.Empty 
+						: "'" + string.Join("','", scope) + "'"
+				);
+			}
 
 			var names = typeof(LocalizationHandler).Assembly.GetManifestResourceNames();
 			foreach (var n in names)
@@ -243,22 +246,8 @@ namespace Knoema.Localization.Web
 			switch (Path.GetExtension(path))
 			{
 				case ".js":
-
-					var current =LocalizationManager.Instance.GetCulture();
-
 					response.ContentType = "application/javascript";
-					output = GetResource(path).Replace("{appPath}", GetAppPath()).Replace("{currentCulture}", current);
-
-					if (IgnoreLocalization())
-					{
-						output = output.Replace("{ignoreLocalization}", "true");
-						break;
-					}						
-					
-					output = output.Replace("{data}", HttpUtility.JavaScriptStringEncode(new JavaScriptSerializer().Serialize(
-								_manager.GetScriptResources(new CultureInfo(current)))))
-							.Replace("{ignoreLocalization}", "false");
-
+					output = GetJsFile(path);
 					break;
 				case ".css":
 					response.ContentType = "text/css";
@@ -288,22 +277,32 @@ namespace Knoema.Localization.Web
 			return output;
 		}
 
+		static string GetJsFile(string path)
+		{
+			var current = LocalizationManager.Instance.GetCulture();
+			var output = GetResource(path).Replace("{appPath}", GetAppPath()).Replace("{currentCulture}", current);
+
+			if (IgnoreLocalization())				
+				return output.Replace("{ignoreLocalization}", "true");			
+		
+			var resources = new JavaScriptSerializer().Serialize(_manager.GetScriptResources(new CultureInfo(current)));
+			
+			return output.Replace("{data}", HttpUtility.JavaScriptStringEncode(resources)).Replace("{ignoreLocalization}", "false");
+		}
+		
 		private static string GetResourceHash(string path)
 		{
 			var hash = string.Empty;
-
+			
 			switch (Path.GetExtension(path).ToLowerInvariant())
 			{
-				case ".js":
-				
-					var current =  LocalizationManager.Instance.GetCulture();
-					var resources = LocalizationManager.Instance.GetScriptResources(new CultureInfo(current));
+				case ".js":				
+					var content = "1.45" + 
+					 (path.EndsWith("jquery-localize.js") && LocalizationManager.Repository != null
+						? GetJsFile(path)
+						: GetStreamHash(GetResourceStream(path))); 
 
-					if (path.EndsWith("jquery-localize.js") && LocalizationManager.Repository != null)
-						hash = GetStringHash(
-							 IgnoreLocalization().ToString() + current + new JavaScriptSerializer().Serialize(resources));
-					else
-						hash = GetStringHash(current + GetStreamHash(GetResourceStream(path)));
+					hash = GetStringHash(content);										
 					break;
 				case ".css":
 					hash = GetStreamHash(GetResourceStream(path));
