@@ -340,7 +340,7 @@ var localization = (function ($) {
 			container.empty();
 
 			container._busy(
-				$.getJSON('{appPath}/_localization/api/search?culture=' + culture + '&text=' + query, function (result) {
+				$.getJSON('{appPath}/_localization/api/search?culture=' + culture + '&text=' + encodeURIComponent(query), function (result) {
 					if (result.length > 0)
 						buildTable(result, container);
 					else
@@ -408,7 +408,7 @@ var localization = (function ($) {
 			$.ajax({
 				type: 'POST',
 				url: '{appPath}/_localization/api/edit',
-				data: 'id=' + key + '&translation=' + t,
+				data: 'id=' + key + '&translation=' + encodeURIComponent(t),
 				success: function () {
 					var href = $('a[key="' + key + '"]');
 					$(href.closest("tr").find('td').get(1)).html(t);
@@ -496,7 +496,6 @@ var localization = (function ($) {
 			url: '{appPath}/_localization/api/disable',
 			data: 'id=' + id,
 			success: function (result) {
-				console.info(result)
 				if(result)
 					$('a[key="' + id + '"]').closest('tr').find('td.translation').text(result);
 			}

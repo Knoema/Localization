@@ -158,8 +158,6 @@ namespace Knoema.Localization
 		public void Delete(params ILocalizedObject[] list)
 		{
 			Repository.Delete(list);
-
-			// clear cache 
 			if (LocalizationCache.Available)
 				LocalizationCache.Clear();
 		}
@@ -186,16 +184,12 @@ namespace Knoema.Localization
 				obj.Disable();
 
 			Repository.Save(list);
-
-			// clear cache 
 			LocalizationCache.Clear();
 		}
 
 		public void Save(params ILocalizedObject[] list)
 		{
 			Repository.Save(list);
-
-			// clear cache 
 			if (LocalizationCache.Available)
 				LocalizationCache.Clear();
 		}
