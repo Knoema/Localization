@@ -46,7 +46,7 @@ namespace Knoema.Localization
 			var hash = GetHash(scope.ToLowerInvariant() + text);
 
 			// get object from cache...
-			var obj = GetLocalizedObject(CultureInfo.CurrentCulture, hash, true);
+			var obj = GetLocalizedObject(CultureInfo.CurrentCulture, hash);
 
 			// if null save object to db for all cultures 
 			if (obj == null)
@@ -58,14 +58,14 @@ namespace Knoema.Localization
 				{
 					lock (_lock)
 					{
-						var stored = GetLocalizedObject(culture, hash, true);
+						var stored = GetLocalizedObject(culture, hash);
 						if (stored == null)
 							Save(Create(hash, culture.LCID, scope, text));
 					}
 				}
 			}
 			else
-				return obj.Translation;
+				return obj.IsDisabled ? null : obj.Translation;
 
 			return null;
 		}
@@ -122,7 +122,7 @@ namespace Knoema.Localization
 			return GetAll(culture).Where(x => (x.Scope != null) && (x.Scope.EndsWith("js") || x.Scope.EndsWith("htm")));
 		}
 
-		public IEnumerable<ILocalizedObject> GetAll(CultureInfo culture, bool ignoreDisabled = false)
+		public IEnumerable<ILocalizedObject> GetAll(CultureInfo culture)
 		{
 			if(!LocalizationCache.Available)
 				return Repository.GetAll(culture).ToList();
@@ -133,9 +133,6 @@ namespace Knoema.Localization
 				lst = Repository.GetAll(culture).ToList();
 				LocalizationCache.Insert(culture.Name, lst);
 			}
-
-			if (ignoreDisabled)
-				lst = lst.Where(obj => !obj.IsDisabled);
 
 			return lst;
 		}
@@ -184,7 +181,8 @@ namespace Knoema.Localization
 				obj.Disable();
 
 			Repository.Save(list);
-			LocalizationCache.Clear();
+			if (LocalizationCache.Available)
+				LocalizationCache.Clear();
 		}
 
 		public void Save(params ILocalizedObject[] list)
@@ -313,9 +311,9 @@ namespace Knoema.Localization
 			return HttpContext.Current.Items["localizationScope"] as List<string>;
 		}
 
-		private ILocalizedObject GetLocalizedObject(CultureInfo culture, string hash, bool ignoreDeleted = false)
+		private ILocalizedObject GetLocalizedObject(CultureInfo culture, string hash)
 		{
-			return GetAll(culture, ignoreDeleted).FirstOrDefault(x => x.Hash == hash);
+			return GetAll(culture).FirstOrDefault(x => x.Hash == hash);
 		}
 
 		private string GetHash(string text)

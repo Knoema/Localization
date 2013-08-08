@@ -77,8 +77,8 @@ var _epls = _epls || [];
 				data: 'text=' + encodeURIComponent(text) + '&scope=' + encodeURIComponent(scope)
 			});
 		}
-		else
-			translation = t.Translation;
+		else if (!t.IsDisabled) 
+				translation = t.Translation;
 
 		var result = (translation == null || translation == '') ? text : translation;
 		return formatWith(result, formatterArguments);
