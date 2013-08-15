@@ -3,13 +3,14 @@ var _epls = _epls || [];
 
 (function ($) {
 	var formatWith = function(text, formatterArguments){
-		if(typeof(formatterArguments) === 'object' && formatterArguments != null){
-			for (var key in formatterArguments) {
-				if (formatterArguments.hasOwnProperty(key)) {
-					text = text.replace("{" + key + "}", formatterArguments[key])
-				}
-			}
+		if(typeof(formatterArguments) !== 'object' || formatterArguments == null)
+			return text;
+		
+		for (var key in formatterArguments) {
+			if (formatterArguments.hasOwnProperty(key))
+				text = text.replace("{" + key + "}", formatterArguments[key]);
 		}
+		
 		return text;
 	}
 
@@ -20,7 +21,6 @@ var _epls = _epls || [];
 		var result = text;
 		var regex = /\[(.*?)\]/g;
 		for(match = regex.exec(text); match; match = regex.exec(text)){
-
 			var items = match[1].split('|')
 			var innerText = items[0]
 
@@ -33,11 +33,7 @@ var _epls = _epls || [];
 					var attrName = attrs[attr].split('=')[0];
 					tag += " " + attrName;
 					if (attrs[attr].split('=').length > 1)
-					{
-						tag += "=\"";
-						tag += attrs[attr].substring(attrName.length + 1)
-						tag += "\"";
-					}
+						tag += "=\"" + attrs[attr].substring(attrName.length + 1) + "\"";
 				}
 			}
 			tag += ">" + innerText + "</a>";
@@ -49,7 +45,6 @@ var _epls = _epls || [];
 	}
 
 	var localize = function (scope, text, formatterArguments) {
-				
 		if (_epli) 
 			_epls.push(scope.toLowerCase());		
 
@@ -60,7 +55,6 @@ var _epls = _epls || [];
 		var data = $.parseJSON('{data}');
 
 		var t = null;
-
 		$.each(data, function () {
 			if (this.Text == text && this.Scope == scope) {
 				t = this;
@@ -69,7 +63,6 @@ var _epls = _epls || [];
 		});
 
 		var translation = null;
-
 		if (t == null) {
 			$.ajax({
 				type: 'POST',

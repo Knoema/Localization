@@ -104,13 +104,13 @@ namespace Knoema.Localization.Mvc
 				return value;
 
 			var result = value;
-			Regex regex = new Regex(@"\[(.*?)\]");
+			var regex = new Regex(@"\[(.*?)\]");
 			foreach (Match match in regex.Matches(result))
 			{
 				var items = match.Value.Trim('[', ']').Split('|');
 				var innerText = items[0];
 
-				var tag = "<a";
+				var tagBuilder = new System.Text.StringBuilder("<a");
 				if (items.Length > 1)
 				{
 					var attrs = new string[items.Length - 1];
@@ -118,18 +118,14 @@ namespace Knoema.Localization.Mvc
 					foreach (var attr in attrs)
 					{
 						var attrName = attr.Split('=')[0];
-						tag += " " + attrName;
+						tagBuilder.Append(" " + attrName);
 						if (attr.Split('=').Length > 1)
-						{
-							tag += "=\"";
-							tag += attr.Substring(attrName.Length + 1);
-							tag += "\"";
-						}
+							tagBuilder.Append("=\"" + attr.Substring(attrName.Length + 1) + "\"");
 					}
 				}
-				tag += ">" + innerText + "</a>";
+				tagBuilder.Append(">" + innerText + "</a>");
 
-				result = result.Replace(match.Value, tag);
+				result = result.Replace(match.Value, tagBuilder.ToString());
 			}
 
 			return result;
@@ -145,23 +141,19 @@ namespace Knoema.Localization.Mvc
 			if (format == null)
 				throw new ArgumentNullException("format");
 
-			Regex r = new Regex(@"(?<start>\{)+(?<property>[\w\.\[\]]+)(?<format>:[^}]+)?(?<end>\})+",
-			  RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
-
-			List<object> values = new List<object>();
+			var r = new Regex(@"(?<start>\{)+(?<property>[\w\.\[\]]+)(?<format>:[^}]+)?(?<end>\})+", RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+			var values = new List<object>();
+			
 			string rewrittenFormat = r.Replace(format, delegate(Match m)
 			{
 				Group startGroup = m.Groups["start"];
 				Group propertyGroup = m.Groups["property"];
 				Group formatGroup = m.Groups["format"];
 				Group endGroup = m.Groups["end"];
-
-				values.Add((propertyGroup.Value == "0")
-				  ? source
-				  : DataBinder.Eval(source, propertyGroup.Value));
-
-				return new string('{', startGroup.Captures.Count) + (values.Count - 1) + formatGroup.Value
-				  + new string('}', endGroup.Captures.Count);
+				
+				values.Add((propertyGroup.Value == "0") ? source : DataBinder.Eval(source, propertyGroup.Value));
+				
+				return new string('{', startGroup.Captures.Count) + (values.Count - 1) + formatGroup.Value + new string('}', endGroup.Captures.Count);
 			});
 
 			return string.Format(provider, rewrittenFormat, values.ToArray());
