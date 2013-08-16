@@ -29,14 +29,14 @@ namespace Knoema.Localization.Cassette
 					var regex = new Regex("__(?:R|R2)\\([\"']{1}.*?(?:[\"']{1}|[}]{1})\\)", RegexOptions.Compiled);
 					var script = regex.Replace(input.ReadToEnd(), delegate(Match match)
 					{
-						var resource = match.Value.Replace("__R", "$.localize");
+						var resource = match.Value.Replace("__R", "$.R");
 						resource = resource.Substring(0, resource.IndexOf('(') + 1) + "'" + _path + "', " + resource.Substring(resource.IndexOf('(') + 1);
 
 						if (Path.GetExtension(_path) == ".htm")
 						{
-							if (resource.Contains("$.localize2"))
+							if (resource.Contains("$.R2"))
 								return "{{html " + resource + "}}";
-							if (resource.Contains("$.localize"))
+							if (resource.Contains("$.R"))
 								return "{{= " + resource + "}}";
 						}
 						return resource;

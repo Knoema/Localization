@@ -78,9 +78,13 @@ var _epls = _epls || [];
 	}
 
 	$.extend({
-		localize: localize,
+		localize: function(text, scope){
+			return localize(scope, text, null);
+		},
 
-		localize2: function (scope, text, formatterArguments) {
+		R: localize,
+
+		R2: function (scope, text, formatterArguments) {
 			return parseMarkup(localize(scope, text, formatterArguments));
 		}
 	})

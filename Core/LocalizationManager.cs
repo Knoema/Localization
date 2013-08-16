@@ -65,7 +65,7 @@ namespace Knoema.Localization
 				}
 			}
 			else
-				return obj.IsDisabled ? null : obj.Translation;
+				return obj.IsDisabled() ? null : obj.Translation;
 
 			return null;
 		}
@@ -108,18 +108,25 @@ namespace Knoema.Localization
 				LocalizationCache.Insert(key.ToString(), obj);
 			}
 
-			if (ignoreDisabled && obj.IsDisabled)
+			if (ignoreDisabled && obj.IsDisabled())
 				return null;
 
 			return obj;
 		}
 
-		public IEnumerable<ILocalizedObject> GetScriptResources(CultureInfo culture)
+		public IEnumerable<Object> GetScriptResources(CultureInfo culture)
 		{
 			if (!GetCultures().Contains(culture))
 				return Enumerable.Empty<ILocalizedObject>();
 
-			return GetAll(culture).Where(x => (x.Scope != null) && (x.Scope.EndsWith("js") || x.Scope.EndsWith("htm")));
+			return GetAll(culture).Where(x => (x.Scope != null) && (x.Scope.EndsWith("js") || x.Scope.EndsWith("htm")))
+									.Select(x => new
+									{
+										Scope = x.Scope,
+										Text = x.Text,
+										Translation = x.Translation,
+										IsDisabled = x.IsDisabled()
+									});
 		}
 
 		public IEnumerable<ILocalizedObject> GetAll(CultureInfo culture)
@@ -165,11 +172,11 @@ namespace Knoema.Localization
 			if(culture == null)
 			{
 				foreach (var item in GetCultures())
-					disabled.AddRange(GetAll(item).Where(obj => obj.IsDisabled));
+					disabled.AddRange(GetAll(item).Where(obj => obj.IsDisabled()));
 			}
 			else
 			{
-				disabled = Repository.GetAll(culture).Where(obj => obj.IsDisabled).ToList();
+				disabled = Repository.GetAll(culture).Where(obj => obj.IsDisabled()).ToList();
 			}
 
 			Delete(disabled.ToArray());
