@@ -65,7 +65,7 @@ namespace Knoema.Localization
 				}
 			}
 			else
-				return obj.Translation;
+				return obj.IsDisabled() ? null : obj.Translation;
 
 			return null;
 		}
@@ -96,7 +96,7 @@ namespace Knoema.Localization
 			return result;
 		}
 
-		public ILocalizedObject Get(int key)
+		public ILocalizedObject Get(int key, bool ignoreDisabled = false)
 		{
 			if(!LocalizationCache.Available)
 				return Repository.Get(key);
@@ -108,15 +108,25 @@ namespace Knoema.Localization
 				LocalizationCache.Insert(key.ToString(), obj);
 			}
 
+			if (ignoreDisabled && obj.IsDisabled())
+				return null;
+
 			return obj;
 		}
 
-		public IEnumerable<ILocalizedObject> GetScriptResources(CultureInfo culture)
+		public IEnumerable<Object> GetScriptResources(CultureInfo culture)
 		{
 			if (!GetCultures().Contains(culture))
 				return Enumerable.Empty<ILocalizedObject>();
 
-			return GetAll(culture).Where(x => (x.Scope != null) && (x.Scope.EndsWith("js") || x.Scope.EndsWith("htm")));
+			return GetAll(culture).Where(x => (x.Scope != null) && (x.Scope.EndsWith("js") || x.Scope.EndsWith("htm")))
+									.Select(x => new
+									{
+										Scope = x.Scope,
+										Text = x.Text,
+										Translation = x.Translation,
+										IsDisabled = x.IsDisabled()
+									});
 		}
 
 		public IEnumerable<ILocalizedObject> GetAll(CultureInfo culture)
@@ -149,12 +159,35 @@ namespace Knoema.Localization
 			return lst;
 		}
 
-
 		public void Delete(params ILocalizedObject[] list)
 		{
 			Repository.Delete(list);
+			if (LocalizationCache.Available)
+				LocalizationCache.Clear();
+		}
 
-			// clear cache 
+		public void ClearDB(CultureInfo culture = null)
+		{
+			var disabled = new List<ILocalizedObject>();
+			if(culture == null)
+			{
+				foreach (var item in GetCultures())
+					disabled.AddRange(GetAll(item).Where(obj => obj.IsDisabled()));
+			}
+			else
+			{
+				disabled = Repository.GetAll(culture).Where(obj => obj.IsDisabled()).ToList();
+			}
+
+			Delete(disabled.ToArray());
+		}
+
+		public void Disable(params ILocalizedObject[] list)
+		{
+			foreach (var obj in list)
+				obj.Disable();
+
+			Repository.Save(list);
 			if (LocalizationCache.Available)
 				LocalizationCache.Clear();
 		}
@@ -162,8 +195,6 @@ namespace Knoema.Localization
 		public void Save(params ILocalizedObject[] list)
 		{
 			Repository.Save(list);
-
-			// clear cache 
 			if (LocalizationCache.Available)
 				LocalizationCache.Clear();
 		}
