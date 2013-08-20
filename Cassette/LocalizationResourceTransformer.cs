@@ -26,16 +26,20 @@ namespace Knoema.Localization.Cassette
 					var stream = new MemoryStream();
 					var writer = new StreamWriter(stream);
 
-					var regex = new Regex("__R\\([\"']{1}.*?[\"']{1}\\)", RegexOptions.Compiled);
+					var regex = new Regex("__(?:R|R2)\\([\"']{1}.*?(?:[\"']{1}|[}]{1})\\)", RegexOptions.Compiled);
 					var script = regex.Replace(input.ReadToEnd(), delegate(Match match)
 					{
-						var resource = match.Value
-							.Remove(match.Value.LastIndexOf(")"), 1)
-							.Replace("__R", "$.localize");
+						var resource = match.Value.Replace("__R", "$.R");
+						resource = resource.Substring(0, resource.IndexOf('(') + 1) + "'" + _path + "', " + resource.Substring(resource.IndexOf('(') + 1);
 
-						resource = string.Format("{0}, \"{1}\")", resource, _path);
-
-						return Path.GetExtension(_path) == ".htm" ? "${" + resource + "}" : resource;
+						if (Path.GetExtension(_path) == ".htm")
+						{
+							if (resource.Contains("$.R2"))
+								return "{{html " + resource + "}}";
+							if (resource.Contains("$.R"))
+								return "{{= " + resource + "}}";
+						}
+						return resource;
 					});
 
 					writer.Write(script);
