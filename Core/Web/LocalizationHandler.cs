@@ -297,7 +297,7 @@ namespace Knoema.Localization.Web
 			switch (Path.GetExtension(path).ToLowerInvariant())
 			{
 				case ".js":				
-					var content = "1.49" + 
+					var content = "1.5" + 
 					 (path.EndsWith("jquery-localize.js") && LocalizationManager.Repository != null
 						? GetJsFile(path)
 						: GetStreamHash(GetResourceStream(path))); 
