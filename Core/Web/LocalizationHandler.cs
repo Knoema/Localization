@@ -137,10 +137,12 @@ namespace Knoema.Localization.Web
 					break;
 
 				case "disable":
-					var disable = _manager.Get(int.Parse(query["id"]));
-					if (disable != null)
-						_manager.Disable(disable);
-					response = disable.Translation;
+						var disable = _manager.Get(int.Parse(query["id"]));
+						if (disable != null)
+						{
+							_manager.Disable(disable);
+							response = disable.Translation;
+						}
 					break;
 
 				case "create":
@@ -188,10 +190,22 @@ namespace Knoema.Localization.Web
 					break;
 
 				case "push":
-					if (string.IsNullOrEmpty(query["scope"]) || string.IsNullOrEmpty(query["text"]))
-						BadRequest(context);
-					else if (!LocalizationManager.Instance.GetCulture().IsDefault())
-						_manager.Translate(query["scope"], query["text"]);					
+					try
+					{
+						if (string.IsNullOrEmpty(query["scope"]) || string.IsNullOrEmpty(query["text"]))
+							BadRequest(context);
+						else if (!LocalizationManager.Instance.GetCulture().IsDefault())
+						{
+							_manager.Translate(query["scope"], query["text"]);
+							response = "Success: \"" + query["text"] + "\" was added to scope \"" + query["scope"] + "\"";
+						}
+						else
+							response = "Success: default culture, localization was not added";
+					}
+					catch (Exception e)
+					{
+						response = "Error: " + e.Message;
+					}
 					break;
 				case "hint":
 					try
@@ -297,7 +311,7 @@ namespace Knoema.Localization.Web
 			switch (Path.GetExtension(path).ToLowerInvariant())
 			{
 				case ".js":				
-					var content = "1.5" + 
+					var content = "1.51" + 
 					 (path.EndsWith("jquery-localize.js") && LocalizationManager.Repository != null
 						? GetJsFile(path)
 						: GetStreamHash(GetResourceStream(path))); 
