@@ -16,8 +16,13 @@ namespace Knoema.Localization
 
 		public static void Disable(this ILocalizedObject obj)
 		{
-			if (!string.IsNullOrEmpty(obj.Translation) && !obj.Translation.StartsWith(_mark))
-				obj.Translation = _mark + obj.Translation;
+			if (!string.IsNullOrEmpty(obj.Translation))
+			{
+				if (!obj.Translation.StartsWith(_mark))
+					obj.Translation = _mark + obj.Translation;
+			}
+			else
+				obj.Translation = _mark;
 		}
 	}
 }
