@@ -70,6 +70,30 @@ namespace Knoema.Localization
 			return null;
 		}
 
+		public void AddTranslatinsForCurrentCulture(string scope, IEnumerable<string> phrases)
+		{
+			if (string.IsNullOrEmpty(scope))
+				throw new ArgumentNullException("Scope cannot be null.");
+
+			if (phrases == null || !phrases.Any())
+				throw new ArgumentNullException("Phrases cannot be null or empty.");
+
+			var lowerScope = scope.ToLowerInvariant();
+			var import = new List<ILocalizedObject>();
+			var toAdd = phrases.Distinct();
+
+			foreach (var phrase in toAdd)
+			{
+				var hash = GetHash(lowerScope + phrase);
+				var obj = GetLocalizedObject(CultureInfo.CurrentCulture, hash);
+
+				if (obj == null)
+					import.Add(Create(hash, CultureInfo.CurrentCulture.LCID, scope, phrase));
+			}
+
+			Save(import.ToArray());
+		}
+
 		public void CreateCulture(CultureInfo culture)
 		{
 			var res = new List<ILocalizedObject>();
