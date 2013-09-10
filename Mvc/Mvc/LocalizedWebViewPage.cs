@@ -38,13 +38,15 @@ namespace Knoema.Localization.Mvc
 
 		private string Translate(string text, bool parseMarkup = false)
 		{
+			LocalizationManager.Instance.InsertScope(VirtualPathUtility.ToAppRelative(VirtualPath).ToLowerInvariant());
+
 			if (CultureInfo.CurrentCulture.IsDefault())
 				return text;
 
 			if (LocalizationManager.Repository == null)
 				return text;
 
-			var translation = LocalizationManager.Instance.Translate(VirtualPath, text);
+			var translation = LocalizationManager.Instance.Translate(VirtualPathUtility.ToAppRelative(VirtualPath), text);
 			return string.IsNullOrEmpty(translation) ? text : translation;
 		}
 
@@ -80,13 +82,15 @@ namespace Knoema.Localization.Mvc
 
 		private string Translate(string text, bool parseMarkup = false)
 		{
+			LocalizationManager.Instance.InsertScope(VirtualPathUtility.ToAppRelative(VirtualPath).ToLowerInvariant());
+
 			if (CultureInfo.CurrentCulture.IsDefault())
 				return text;
 
 			if (LocalizationManager.Repository == null)
 				return text;
 
-			var translation = LocalizationManager.Instance.Translate(VirtualPath, text);
+			var translation = LocalizationManager.Instance.Translate(VirtualPathUtility.ToAppRelative(VirtualPath), text);
 			return string.IsNullOrEmpty(translation) ? text : translation;
 		}
 
