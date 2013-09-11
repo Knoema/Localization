@@ -160,8 +160,8 @@ namespace Knoema.Localization.Web
 
 					var objects = _manager.GetAll(new CultureInfo(query["culture"]));
 					var scope = query["scope"];
-					if(!string.IsNullOrEmpty(scope))
-						objects = objects.Where(obj => obj.Scope.ToLower() == scope.ToLower());
+					if (!string.IsNullOrEmpty(scope))
+						objects = objects.Where(obj => obj.Scope.ToLower().Contains(scope.ToLower()));
 
 					var data = objects.Select(x =>
 						new
