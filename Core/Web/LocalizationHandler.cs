@@ -157,7 +157,13 @@ namespace Knoema.Localization.Web
 
 				case "export":
 					var filepath = Path.GetTempFileName();
-					var data = _manager.GetAll(new CultureInfo(query["culture"])).Select(x =>
+
+					var objects = _manager.GetAll(new CultureInfo(query["culture"]));
+					var scope = query["scope"];
+					if (!string.IsNullOrEmpty(scope))
+						objects = objects.Where(obj => obj.Scope.ToLower().Contains(scope.ToLower()));
+
+					var data = objects.Select(x =>
 						new
 						{
 							LocaleId = x.LocaleId,
