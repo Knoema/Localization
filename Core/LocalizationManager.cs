@@ -30,7 +30,7 @@ namespace Knoema.Localization
 
 		private LocalizationManager() { }
 
-		public string Translate(string scope, string text)
+		public string Translate(string scope, string text, bool readOnly = false)
 		{
 			if (string.IsNullOrEmpty(scope))
 				throw new ArgumentNullException("Scope cannot be null.");
@@ -48,6 +48,9 @@ namespace Knoema.Localization
 			// get object from cache...
 			var obj = GetLocalizedObject(CultureInfo.CurrentCulture, hash);
 
+			if (readOnly && obj == null)
+				return null;
+
 			// if null save object to db for all cultures 
 			if (obj == null)
 			{
@@ -55,14 +58,12 @@ namespace Knoema.Localization
 					cultures.Add(DefaultCulture.Value);
 
 				foreach (var culture in cultures)
-				{
 					lock (_lock)
 					{
 						var stored = GetLocalizedObject(culture, hash);
 						if (stored == null)
 							Save(Create(hash, culture.LCID, scope, text));
 					}
-				}
 			}
 			else
 				return obj.IsDisabled() ? null : obj.Translation;
