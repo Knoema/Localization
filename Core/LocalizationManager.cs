@@ -30,7 +30,7 @@ namespace Knoema.Localization
 
 		private LocalizationManager() { }
 
-		public string Translate(string scope, string text, bool readOnly = false)
+		public string Translate(string scope, string text, bool readOnly = false, CultureInfo culture = null)
 		{
 			if (string.IsNullOrEmpty(scope))
 				throw new ArgumentNullException("Scope cannot be null.");
@@ -38,15 +38,18 @@ namespace Knoema.Localization
 			if (string.IsNullOrEmpty(text))
 				throw new ArgumentNullException("Text cannot be null.");
 
+			if (culture == null)
+				culture = CultureInfo.CurrentCulture;
+
 			var cultures = GetCultures().ToList();
 
-			if (cultures.Count > 0 && !cultures.Contains(CultureInfo.CurrentCulture))
+			if (cultures.Count > 0 && !cultures.Contains(culture))
 				return null;
 
 			var hash = GetHash(scope.ToLowerInvariant() + text);
 
 			// get object from cache...
-			var obj = GetLocalizedObject(CultureInfo.CurrentCulture, hash);
+			var obj = GetLocalizedObject(culture, hash);
 
 			if (readOnly && obj == null)
 				return null;
@@ -57,12 +60,12 @@ namespace Knoema.Localization
 				if (!cultures.Contains(DefaultCulture.Value))
 					cultures.Add(DefaultCulture.Value);
 
-				foreach (var culture in cultures)
+				foreach (var c in cultures)
 					lock (_lock)
 					{
-						var stored = GetLocalizedObject(culture, hash);
+						var stored = GetLocalizedObject(c, hash);
 						if (stored == null)
-							Save(Create(hash, culture.LCID, scope, text));
+							Save(Create(hash, c.LCID, scope, text));
 					}
 			}
 			else

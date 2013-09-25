@@ -14,40 +14,14 @@ namespace Knoema.Localization.Mvc
 {
 	public abstract class LocalizedWebViewPage : WebViewPage
 	{
-		public string R(string text, params object[] formatterArguments)
+		public string R(string text, CultureInfo culture = null, params object[] formatterArguments)
 		{
-			var translation = Translate(text);
-
-			if (formatterArguments.Length == 0)
-				return translation;
-
-			return formatterArguments.Length == 1 ? translation.FormatWith(formatterArguments[0]) : string.Format(translation, formatterArguments);
+			return this.T(text, culture, formatterArguments);
 		}
 
-		public HtmlString R2(string text, params object[] formatterArguments)
+		public HtmlString R2(string text, CultureInfo culture = null, params object[] formatterArguments)
 		{
-			var translation = Translate(text, true);
-
-			if (formatterArguments.Length == 1)
-				translation = translation.FormatWith(formatterArguments[0]);
-			else if (formatterArguments.Length > 1)
-				translation = string.Format(translation, formatterArguments);
-
-			return new HtmlString(translation.ParseMarkup());
-		}
-
-		private string Translate(string text, bool parseMarkup = false)
-		{
-			LocalizationManager.Instance.InsertScope(VirtualPathUtility.ToAppRelative(VirtualPath).ToLowerInvariant());
-
-			if (CultureInfo.CurrentCulture.IsDefault())
-				return text;
-
-			if (LocalizationManager.Repository == null)
-				return text;
-
-			var translation = LocalizationManager.Instance.Translate(VirtualPathUtility.ToAppRelative(VirtualPath), text);
-			return string.IsNullOrEmpty(translation) ? text : translation;
+			return this.T2(text, culture, formatterArguments);
 		}
 
 		public MvcHtmlString RenderLocalizationIncludes(bool admin)
@@ -58,9 +32,27 @@ namespace Knoema.Localization.Mvc
 
 	public abstract class LocalizedWebViewPage<TModel> : WebViewPage<TModel>
 	{
-		public string R(string text, params object[] formatterArguments)
+		public string R(string text, CultureInfo culture = null, params object[] formatterArguments)
 		{
-			var translation = Translate(text);
+			return this.T(text, culture, formatterArguments);
+		}
+
+		public HtmlString R2(string text, CultureInfo culture = null, params object[] formatterArguments)
+		{
+			return this.T2(text, culture, formatterArguments);
+		}
+
+		public MvcHtmlString RenderLocalizationIncludes(bool admin)
+		{
+			return MvcHtmlString.Create(LocalizationHandler.RenderIncludes(admin, LocalizationManager.Instance.GetScope()));
+		}
+	}
+
+	internal static class WebViewPageExtensions
+	{
+		internal static string T(this WebViewPage page, string text, CultureInfo culture = null, params object[] formatterArguments)
+		{
+			var translation = Translate(page.VirtualPath, text, culture: culture);
 
 			if (formatterArguments.Length == 0)
 				return translation;
@@ -68,9 +60,9 @@ namespace Knoema.Localization.Mvc
 			return formatterArguments.Length == 1 ? translation.FormatWith(formatterArguments[0]) : string.Format(translation, formatterArguments);
 		}
 
-		public HtmlString R2(string text, params object[] formatterArguments)
+		internal static HtmlString T2(this WebViewPage page, string text, CultureInfo culture = null, params object[] formatterArguments)
 		{
-			var translation = Translate(text, true);
+			var translation = Translate(page.VirtualPath, text, true, culture);
 
 			if (formatterArguments.Length == 1)
 				translation = translation.FormatWith(formatterArguments[0]);
@@ -80,23 +72,22 @@ namespace Knoema.Localization.Mvc
 			return new HtmlString(translation.ParseMarkup());
 		}
 
-		private string Translate(string text, bool parseMarkup = false)
+		private static string Translate(string virtualPath, string text, bool parseMarkup = false, CultureInfo culture = null)
 		{
-			LocalizationManager.Instance.InsertScope(VirtualPathUtility.ToAppRelative(VirtualPath).ToLowerInvariant());
+			LocalizationManager.Instance.InsertScope(VirtualPathUtility.ToAppRelative(virtualPath).ToLowerInvariant());
 
-			if (CultureInfo.CurrentCulture.IsDefault())
+			if (culture == null)
+				culture = CultureInfo.CurrentCulture;
+
+			if (culture.IsDefault())
 				return text;
 
 			if (LocalizationManager.Repository == null)
 				return text;
 
-			var translation = LocalizationManager.Instance.Translate(VirtualPathUtility.ToAppRelative(VirtualPath), text);
-			return string.IsNullOrEmpty(translation) ? text : translation;
-		}
+			var translation = LocalizationManager.Instance.Translate(virtualPath, text, culture: culture);
 
-		public MvcHtmlString RenderLocalizationIncludes(bool admin)
-		{
-			return MvcHtmlString.Create(LocalizationHandler.RenderIncludes(admin, LocalizationManager.Instance.GetScope()));
+			return string.IsNullOrEmpty(translation) ? text : translation;
 		}
 	}
 
