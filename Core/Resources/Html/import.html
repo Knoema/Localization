@@ -1,7 +1,6 @@
 ﻿<div id="import">
-	<h3>
-		Export</h3>
-	<form action="/_localization/api/export" method="post">
+	<h3>Export</h3>
+	<form action="/_localization/api/export" method="post" target="export-import-frame">
 		<div>
 			<label>
 				Language:
@@ -14,13 +13,12 @@
 			<input id="scope" name="scope"/>
 		</div>
 		<div>
-			<input type="submit" value="Export" />
+			<input type="submit" id="export" value="Export" />
 		</div>
 	</form>
 	<div style="margin-top: 10px">
-		<h3>
-			Import</h3>
-		<form action="/_localization/api/import" method="post" enctype = "multipart/form-data" target="import-frame">
+		<h3>Import</h3>
+		<form action="/_localization/api/import" method="post" enctype="multipart/form-data" target="export-import-frame">
 			<div>
 				<input type="file" id="file" name="file" />
 			</div>
@@ -30,19 +28,17 @@
 		</form>
 	</div>
 	<div style="margin-top: 10px" id="create-lang">
-		<h3>
-			Create language</h3>
+		<h3>Create language</h3>
 		<input type="text" />
 		<input type="button" value="create" />
 	</div>
 	<div style="margin-top: 10px">
-		<h3>
-			Clear DB of deleted translations</h3>
+		<h3>Clear DB of deleted translations (for all languages)</h3>
 		<input id="cleardb" type="button" value="Clear" />
 	</div>
 	<div id="status">
 		<label></label>
 		<div></div>
 	</div>
-	<iframe name="import-frame" id="import-frame" style="display:none;"></iframe>
+	<iframe name="export-import-frame" id="export-import-frame" style="display:none;"></iframe>
 </div>

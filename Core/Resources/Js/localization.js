@@ -57,11 +57,8 @@ var localization = (function ($) {
 	};
 
 	var addResourcesTab = function () {
-
 		var container = getContainer().find('div.tab');
-
 		container.empty();
-
 		container._busy(
 			$.get('{appPath}/_localization/resources.html', function (result) {
 
@@ -80,9 +77,7 @@ var localization = (function ($) {
 	};
 
 	var addImportTab = function () {
-
 		var container = getContainer().find('div.tab');
-
 		container.empty();
 
 		container._busy(
@@ -92,21 +87,32 @@ var localization = (function ($) {
 				container.find('div#create-lang input[type="button"]').click(createLanguage);
 
 				$.getJSON('{appPath}/_localization/api/cultures', function (result) {
-
 					$.each(result, function () {
 						$(buildHtml('option', this.toString(), { 'value': this.toString() })).appendTo($('#culture'));
 					});
+				});
 
-					$('input#import').click(function () {
+				$('input#import').click(function () {
+					var d = $.Deferred();
+					container.find('#status div')._busy(d);
+					container.find('#status label').text('Import in progress...');
 
-						var d = $.Deferred();
-						container.find('#status div')._busy(d);
-						container.find('#status label').text('Import in progress...');
+					$('#export-import-frame').load(function () {
+						d.resolve();
+						var responseText = $('#export-import-frame').contents().find('body').html();
+						if (responseText.indexOf('Error') > -1)
+							container.find('#status label').text(responseText);
+						else
+							container.find('#status label').text('Import finished successfully.');
 
-						$('#import-frame').load(function () {
-							d.resolve();
-							container.find('#status label').text('Import finished.');
-						});
+					});
+				});
+
+				$('input#export').click(function () {
+					$('#export-import-frame').load(function () {
+						var responseText = $('#export-import-frame').contents().find('body').html();
+						if (responseText.indexOf('Error') > -1)
+							container.find('#status label').text(responseText);
 					});
 				});
 
@@ -116,7 +122,8 @@ var localization = (function ($) {
 						url: '{appPath}/_localization/api/cleardb',
 						success: function () {
 							container.find('#status label').text('DB was cleared.');
-						}
+						},
+						error: handleError
 					})
 				});
 			})
@@ -142,7 +149,13 @@ var localization = (function ($) {
 					$.each(result, function () {
 						$(buildHtml('option', this.toString(), { 'value': this.toString(), 'selected': this.toString() == currentCulture })).appendTo(culture);
 					});
-					tree(culture.val());
+
+					if (currentCulture.toLowerCase() == 'en-us') {
+						culture.prepend(buildHtml('option', '', { 'value': currentCulture, 'selected': true }));
+						$('#tree').html('Select language for translation.');
+					}
+					else
+						tree(culture.val());
 				}
 				else
 					$('#tree').html('No languages. To create new language enter name (for example ru-ru) and press "create".');
@@ -151,23 +164,19 @@ var localization = (function ($) {
 	};
 
 	var createLanguage = function () {
-
 		var container = getContainer();
 		var culture = container.find('div#create-lang input[type="text"]').val();
 
-		container.find('#status div')._busy(
-			$.ajax({
-				type: 'POST',
-				url: '{appPath}/_localization/api/create',
-				data: 'culture=' + culture,
-				success: function (result) {
-					if (result != '')
-						container.find('#status label').text(culture + ' culture has been created.');
-					else
-						container.find('#status label').text('Failed to create a culture ' + culture + '.');
-				}
-			})
-		);
+		$.ajax({
+			type: 'POST',
+			url: '{appPath}/_localization/api/create',
+			data: 'culture=' + culture,
+			success: function (result) {
+				if (result != '')
+					container.find('#status label').text(result + ' culture has been created.');
+			},
+			error: handleError
+		})
 	};
 
 	var tree = function (culture) {
@@ -512,6 +521,10 @@ var localization = (function ($) {
 		return container;
 	};
 
+	var handleError = function (xhr) {
+		getContainer().find('#status label').text(xhr.responseText);
+	}
+
 	var buildHtml = function (tag, html, attrs) {
 
 		if (typeof (html) != 'string' && html) {
@@ -545,7 +558,6 @@ jQuery.fn.extend({
 		var pos = element.css('position');
 		if (pos == 'static')
 			element.css('position', 'relative');
-
 		element.append(div);
 
 		var img = div.find('img');
