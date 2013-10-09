@@ -188,14 +188,10 @@ namespace Knoema.Localization
 		{
 			var disabled = new List<ILocalizedObject>();
 			if(culture == null)
-			{
 				foreach (var item in GetCultures())
 					disabled.AddRange(GetAll(item).Where(obj => obj.IsDisabled()));
-			}
 			else
-			{
 				disabled = Repository.GetAll(culture).Where(obj => obj.IsDisabled()).ToList();
-			}
 
 			Delete(disabled.ToArray());
 		}

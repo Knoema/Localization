@@ -62,19 +62,27 @@ namespace Knoema.Localization.Web
 
 		public void ProcessRequest(HttpContext context)
 		{
-			string response;
+			try
+			{
+				string response;
 
-			if (context.Request.Url.AbsolutePath.Contains("/_localization/api"))
-				response = Api(
-						context,
-						context.Request.Url.Segments[context.Request.Url.Segments.Length - 1],
-						context.Request.Params);
-			else
-				response = R(
-						context,
-						GetResourcePath(context.Request.AppRelativeCurrentExecutionFilePath));
+				if (context.Request.Url.AbsolutePath.Contains("/_localization/api"))
+					response = Api(
+							context,
+							context.Request.Url.Segments[context.Request.Url.Segments.Length - 1],
+							context.Request.Params);
+				else
+					response = R(
+							context,
+							GetResourcePath(context.Request.AppRelativeCurrentExecutionFilePath));
 
-			context.Response.Write(response);
+				context.Response.Write(response);
+			}
+			catch (Exception e)
+			{
+				context.Response.StatusCode = (int)System.Net.HttpStatusCode.BadRequest;
+				context.Response.Write("Error: " + e.Message);
+			}
 		}
 
 		private string Api(HttpContext context, string endpoint, NameValueCollection query)
@@ -86,7 +94,7 @@ namespace Knoema.Localization.Web
 			{
 				case "cultures":				
 					response = serializer.Serialize(
-						_manager.GetCultures().Where(x => x.LCID != DefaultCulture.Value.LCID).Select(x => x.Name));				
+						_manager.GetCultures().Where(x => x.LCID != DefaultCulture.Value.LCID).Select(x => x.Name));
 					break;
 
 				case "tree":
@@ -146,52 +154,68 @@ namespace Knoema.Localization.Web
 					break;
 
 				case "create":
-					try
-					{
-						var culture = new CultureInfo(query["culture"]);
-						_manager.CreateCulture(new CultureInfo(query["culture"]));
-						response = culture.Name;
-					}
-					catch (CultureNotFoundException) { }
+					if(string.IsNullOrEmpty(query["culture"]))
+						throw new Exception("Language name is empty.");
+
+					var culture = new CultureInfo(query["culture"]);
+					_manager.CreateCulture(culture);
+					response = culture.Name;
 				break;
 
 				case "export":
-					var filepath = Path.GetTempFileName();
+					try
+					{
+						var filepath = Path.GetTempFileName();
 
-					var objects = _manager.GetAll(new CultureInfo(query["culture"]));
-					var scope = query["scope"];
-					if (!string.IsNullOrEmpty(scope))
-						objects = objects.Where(obj => obj.Scope.ToLower().Contains(scope.ToLower()));
+						var objects = _manager.GetAll(new CultureInfo(query["culture"]));
+						var scope = query["scope"];
+						if (!string.IsNullOrEmpty(scope))
+							objects = objects.Where(obj => obj.Scope.ToLower().Contains(scope.ToLower()));
 
-					var data = objects.Select(x =>
-						new
-						{
-							LocaleId = x.LocaleId,
-							Hash = x.Hash,
-							Scope = x.Scope,
-							Text = x.Text,
-							Translation = x.Translation
-						});
+						var data = objects.Select(x =>
+							new
+							{
+								LocaleId = x.LocaleId,
+								Hash = x.Hash,
+								Scope = x.Scope,
+								Text = x.Text,
+								Translation = x.Translation
+							});
 
-					File.WriteAllText(filepath, serializer.Serialize(data));		
+						File.WriteAllText(filepath, serializer.Serialize(data));
 
-					context.Response.ContentType = "application/json";
-					context.Response.AppendHeader("Content-Disposition", "attachment; filename=" + query["culture"] + ".json");
-					context.Response.TransmitFile(filepath);
-					context.Response.End();			
-	
+						context.Response.ContentType = "application/json";
+						context.Response.AppendHeader("Content-Disposition", "attachment; filename=" + query["culture"] + ".json");
+						context.Response.TransmitFile(filepath);
+					}
+					catch (Exception e)
+					{
+						response = "Error: " + e.Message;
+					}
 					break;
 
 				case "import":
-					if (context.Request.Files.Count > 0)
+					try
 					{
-						for (int i = 0; i < context.Request.Files.Count; i++)
-							using (var reader = new StreamReader(context.Request.Files[i].InputStream))
-							{
-								var json = reader.ReadToEnd();
-								_manager.Import(
-									serializer.Deserialize<IEnumerable<Repository.LocalizedObject>>(json).ToArray());
-							}
+						if (context.Request.Files.Count > 0)
+						{
+							for (int i = 0; i < context.Request.Files.Count; i++)
+								using (var reader = new StreamReader(context.Request.Files[i].InputStream))
+								{
+									var json = reader.ReadToEnd();
+									_manager.Import(
+										serializer.Deserialize<IEnumerable<Repository.LocalizedObject>>(json).ToArray());
+								}
+
+							response = "Success";
+						}
+					}
+					catch (Exception e)
+					{
+						if (e is ArgumentNullException)
+							response = "Error: choose file to import";
+						else
+							response = "Error: " + e.Message;
 					}
 					break;
 
@@ -419,7 +443,7 @@ namespace Knoema.Localization.Web
 		{
 			var tree = new List<TreeNode>();
 
-			foreach (var obj in lst)
+			foreach (var obj in lst.OrderBy(x => x.Scope))
 			{
 				if (obj.Scope == null)
 					continue;
