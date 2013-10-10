@@ -70,7 +70,7 @@ var _epls = _epls || [];
 				data: 'text=' + encodeURIComponent(text) + '&scope=' + encodeURIComponent(scope)
 			});
 		}
-		else if (!t.IsDisabled) 
+		else if (!t.IsDeleted) 
 				translation = t.Translation;
 
 		var result = (translation == null || translation == '') ? text : translation;

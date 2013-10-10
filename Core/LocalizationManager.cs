@@ -69,7 +69,7 @@ namespace Knoema.Localization
 					}
 			}
 			else
-				return obj.IsDisabled() ? null : obj.Translation;
+				return obj.IsDeleted() ? null : obj.Translation;
 
 			return null;
 		}
@@ -124,7 +124,7 @@ namespace Knoema.Localization
 			return result;
 		}
 
-		public ILocalizedObject Get(int key, bool ignoreDisabled = false)
+		public ILocalizedObject Get(int key)
 		{
 			if(!LocalizationCache.Available)
 				return Repository.Get(key);
@@ -135,9 +135,6 @@ namespace Knoema.Localization
 				obj = Repository.Get(key);
 				LocalizationCache.Insert(key.ToString(), obj);
 			}
-
-			if (ignoreDisabled && obj.IsDisabled())
-				return null;
 
 			return obj;
 		}
@@ -153,7 +150,7 @@ namespace Knoema.Localization
 										Scope = x.Scope,
 										Text = x.Text,
 										Translation = x.Translation,
-										IsDisabled = x.IsDisabled()
+										IsDeleted = x.IsDeleted()
 									});
 		}
 
@@ -187,7 +184,7 @@ namespace Knoema.Localization
 			return lst;
 		}
 
-		public void Delete(params ILocalizedObject[] list)
+		public void DeleteFromDB(params ILocalizedObject[] list)
 		{
 			Repository.Delete(list);
 			if (LocalizationCache.Available)
@@ -196,20 +193,30 @@ namespace Knoema.Localization
 
 		public void ClearDB(CultureInfo culture = null)
 		{
-			var disabled = new List<ILocalizedObject>();
+			var deleted = new List<ILocalizedObject>();
 			if(culture == null)
 				foreach (var item in GetCultures())
-					disabled.AddRange(GetAll(item).Where(obj => obj.IsDisabled()));
+					deleted.AddRange(GetAll(item).Where(obj => obj.IsDeleted()));
 			else
-				disabled = Repository.GetAll(culture).Where(obj => obj.IsDisabled()).ToList();
+				deleted = Repository.GetAll(culture).Where(obj => obj.IsDeleted()).ToList();
 
-			Delete(disabled.ToArray());
+			DeleteFromDB(deleted.ToArray());
 		}
 
-		public void Disable(params ILocalizedObject[] list)
+		public void Delete(params ILocalizedObject[] list)
 		{
 			foreach (var obj in list)
-				obj.Disable();
+				obj.Delete();
+
+			Repository.Save(list);
+			if (LocalizationCache.Available)
+				LocalizationCache.Clear();
+		}
+
+		public void Recover(params ILocalizedObject[] list)
+		{
+			foreach (var obj in list)
+				obj.Recover();
 
 			Repository.Save(list);
 			if (LocalizationCache.Available)

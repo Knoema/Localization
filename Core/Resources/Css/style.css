@@ -11,6 +11,17 @@ div#localization input, div#localization select, div#localization textarea
 	font-family: sans-serif;
 }
 
+label[for="showDeleted"]
+{
+	margin-left: 5px;
+}
+
+input#showDeleted
+{
+	position: relative;
+	top: 2px;
+}
+
 div#localization input[type="submit"]
 {
 	padding:2px 5px;
