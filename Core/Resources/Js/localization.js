@@ -72,6 +72,10 @@ var localization = (function ($) {
 					if (event.keyCode == 13 && text != '')
 						search($('#culture').val(), text);	
 				});
+
+				container.find('input#showDeleted').click(function () {
+					loadResources();
+				});
 			})
 		);
 	};
@@ -182,12 +186,12 @@ var localization = (function ($) {
 	var tree = function (culture) {
 
 		if (culture != null) {
+			var container = getContainer();
+			var treeContainer = container.find('div#tree');
+			treeContainer.empty();
 
-			var container = getContainer().find('div#tree');
-			container.empty();
-
-			container._busy(
-				$.getJSON('{appPath}/_localization/api/tree?culture=' + culture, function (result) {
+			treeContainer._busy(
+				$.getJSON('{appPath}/_localization/api/tree?culture=' + culture + '&loadDeleted=' + loadDeleted(), function (result) {
 
 					if (_epls.length > 0) {
 
@@ -209,10 +213,10 @@ var localization = (function ($) {
 							});
 						});
 
-						parseTree([scope], container);
+						parseTree([scope], treeContainer);
 					};
 
-					parseTree(result, container);
+					parseTree(result, treeContainer);
 					
 					var tree = $('ul.tree');
 
@@ -226,6 +230,7 @@ var localization = (function ($) {
 							table(culture, $(this).attr('scope'));
 					});
 
+					container.find('div#table').empty().append('Select item in directory tree.');
 				})
 			);
 
@@ -248,9 +253,9 @@ var localization = (function ($) {
 				return null;
 			};
 
-			var parseTree = function (treeNode, container) {
+			var parseTree = function (treeNode, treeContainer) {
 
-				var ul = $(buildHtml('ul', { 'class': 'tree' })).appendTo(container);
+				var ul = $(buildHtml('ul', { 'class': 'tree' })).appendTo(treeContainer);
 
 				$.each(treeNode, function () {
 
@@ -278,7 +283,7 @@ var localization = (function ($) {
 	};	
 
 	var buildTable = function (result, container) {
-
+		container.empty();
 		var table = $(buildHtml('table', { 'class': 'resources-table' })).appendTo(container);
 
 		// headers
@@ -298,33 +303,65 @@ var localization = (function ($) {
 
 			var op = $(buildHtml('td', { 'class': 'op' })).appendTo(row);
 
-			var edit = $(buildHtml('a', 'Edit', {
-				'href': '#',
-				'key': result[i].Key,
-				'prev': i == 0 ? '' : result[i - 1].Key,
-				'next': i + 1 == result.length ? '' : result[i + 1].Key,
-				'scope': result[i].Scope
-			})).appendTo(op)
-
-			op.append('&nbsp;');
-
-			var del = $(buildHtml('a', 'Delete', {
-				'href': '#',
-				'key': result[i].Key
-			})).appendTo(op);
-
-			edit.click(function () {
-				editTranslation($(this).attr('key'));
-				return false;
-			});
-
-			del.click(function () {
-				disableTranslation($(this).attr('key'));
-				return false;
-			});
+			if (!result[i].IsDeleted)
+				buildEditAndDelete(
+					result[i].Key,
+					i == 0 ? '' : result[i - 1].Key,
+					i + 1 == result.length ? '' : result[i + 1].Key,
+					result[i].Scope,
+					op);
+			else
+				buildRecover(
+					result[i].Key,
+					i == 0 ? '' : result[i - 1].Key,
+					i + 1 == result.length ? '' : result[i + 1].Key,
+					result[i].Scope,
+					op);
 		};
 	
 	};
+
+	var buildEditAndDelete = function (key, prev, next, scope, element) {
+		var edit = $(buildHtml('a', 'Edit', {
+			'href': '#',
+			'key': key,
+			'prev': prev,
+			'next': next,
+			'scope': scope
+		})).appendTo(element)
+
+		element.append('&nbsp;');
+
+		var del = $(buildHtml('a', 'Delete', {
+			'href': '#',
+			'key': key
+		})).appendTo(element);
+
+		edit.click(function () {
+			editTranslation(key);
+			return false;
+		});
+
+		del.click(function () {
+			deleteTranslation(key);
+			return false;
+		});
+	}
+
+	var buildRecover = function (key, prev, next, scope, element) {
+		var recover = $(buildHtml('a', 'Recover', {
+			'href': '#',
+			'key': key,
+			'prev': prev,
+			'next': next,
+			'scope': scope
+		})).appendTo(element);
+		
+		recover.click(function () {
+			recoverTranslation(key);
+			return false;
+		})
+	}
 
 	var table = function (culture, scope) {
 
@@ -334,7 +371,7 @@ var localization = (function ($) {
 			container.empty();
 
 			container._busy(
-				$.getJSON('{appPath}/_localization/api/table?culture=' + culture + '&scope=' + scope, function (result) {
+				$.getJSON('{appPath}/_localization/api/table?culture=' + culture + '&scope=' + scope + '&loadDeleted=' + loadDeleted(), function (result) {
 					buildTable(result, container);
 				})
 			);
@@ -349,7 +386,7 @@ var localization = (function ($) {
 			container.empty();
 
 			container._busy(
-				$.getJSON('{appPath}/_localization/api/search?culture=' + culture + '&text=' + encodeURIComponent(query), function (result) {
+				$.getJSON('{appPath}/_localization/api/search?culture=' + culture + '&text=' + encodeURIComponent(query) + '&loadDeleted=' + loadDeleted(), function (result) {
 					if (result.length > 0)
 						buildTable(result, container);
 					else
@@ -499,17 +536,49 @@ var localization = (function ($) {
 		);
 	};
 
-	var disableTranslation = function (id) {
+	var deleteTranslation = function (id) {
 		$.ajax({
 			type: 'POST',
-			url: '{appPath}/_localization/api/disable',
+			url: '{appPath}/_localization/api/delete',
 			data: 'id=' + id,
 			success: function (result) {
-				if(result)
-					$('a[key="' + id + '"]').closest('tr').find('td.translation').text(result);
+				var el = $('a[key="' + id + '"]');
+				if (loadDeleted()) {
+					if (result) {
+						el.closest('tr').find('td.translation').text(result);
+						var td = el.closest('td.op').empty();
+						buildRecover(
+							el.attr('key'),
+							el.attr('prev'),
+							el.attr('next'),
+							el.attr('scope'),
+							td);
+					}
+				}
+				else
+					el.closest('tr').remove();
 			}
 		});
 	};
+
+	var recoverTranslation = function (id) {
+		$.ajax({
+			type: 'POST',
+			url: '{appPath}/_localization/api/recover',
+			data: 'id=' + id,
+			success: function (result) {
+				var el = $('a[key="' + id + '"]');
+				el.closest('tr').find('td.translation').text(result);
+				var td = el.closest('td.op').empty();
+				buildEditAndDelete(
+					el.attr('key'),
+					el.attr('prev'),
+					el.attr('next'),
+					el.attr('scope'),
+					td);
+			}
+		});
+	}
 
 	var getContainer = function () {
 
@@ -523,6 +592,10 @@ var localization = (function ($) {
 
 	var handleError = function (xhr) {
 		getContainer().find('#status label').text(xhr.responseText);
+	}
+
+	var loadDeleted = function () {
+		return getContainer().find('input#showDeleted').prop('checked');
 	}
 
 	var buildHtml = function (tag, html, attrs) {
