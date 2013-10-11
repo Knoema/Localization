@@ -62,53 +62,74 @@ namespace Knoema.Localization.Web
 
 		public void ProcessRequest(HttpContext context)
 		{
-			string response;
+			try
+			{
+				string response;
 
-			if (context.Request.Url.AbsolutePath.Contains("/_localization/api"))
-				response = Api(
-						context,
-						context.Request.Url.Segments[context.Request.Url.Segments.Length - 1],
-						context.Request.Params);
-			else
-				response = R(
-						context,
-						GetResourcePath(context.Request.AppRelativeCurrentExecutionFilePath));
+				if (context.Request.Url.AbsolutePath.Contains("/_localization/api"))
+					response = Api(
+							context,
+							context.Request.Url.Segments[context.Request.Url.Segments.Length - 1],
+							context.Request.Params);
+				else
+					response = R(
+							context,
+							GetResourcePath(context.Request.AppRelativeCurrentExecutionFilePath));
 
-			context.Response.Write(response);
+				context.Response.Write(response);
+			}
+			catch (Exception e)
+			{
+				context.Response.StatusCode = (int)System.Net.HttpStatusCode.BadRequest;
+				context.Response.Write("Error: " + e.Message);
+			}
 		}
 
 		private string Api(HttpContext context, string endpoint, NameValueCollection query)
 		{
 			var serializer = new JavaScriptSerializer();
 			var response = string.Empty;
+			var culture = string.IsNullOrEmpty(query["culture"]) ? DefaultCulture.Value : new CultureInfo(query["culture"]);
+			IEnumerable<ILocalizedObject> resources = null;
+			var loadDeleted = false;
+			bool.TryParse(query["loadDeleted"], out loadDeleted);
 
 			switch (endpoint)
 			{
 				case "cultures":				
-					response = serializer.Serialize(
-						_manager.GetCultures().Where(x => x.LCID != DefaultCulture.Value.LCID).Select(x => x.Name));				
+					response = serializer.Serialize(_manager.GetCultures().Where(x => x.LCID != DefaultCulture.Value.LCID).Select(x => x.Name));
 					break;
 
 				case "tree":
-					var resources = _manager.GetAll(
-						string.IsNullOrEmpty(query["culture"])
-							? DefaultCulture.Value
-							: new CultureInfo(query["culture"])
-						);
-					response = serializer.Serialize(
-						GetTree(resources).Where(x => x.IsRoot));
+					resources = _manager.GetAll(culture);
+					if (!loadDeleted)
+						resources = resources.Where(obj => !obj.IsDeleted());
+
+					response = serializer.Serialize(GetTree(resources).Where(x => x.IsRoot));
 					break;
 
-				case "table":	
-					response = serializer
-						.Serialize(
-							_manager.GetAll(new CultureInfo(query["culture"]))
-									.Where(x => (x.Scope != null) && x.Scope.StartsWith(query["scope"], StringComparison.InvariantCultureIgnoreCase)));
+				case "table":
+					resources = _manager.GetAll(culture);
 
+					if (!loadDeleted)
+						resources = resources.Where(obj => !obj.IsDeleted());
+
+					response = serializer.Serialize(
+											resources.Where(x => (x.Scope != null) && x.Scope.StartsWith(query["scope"], StringComparison.InvariantCultureIgnoreCase))
+														.Select(x=> new 
+														{
+															Key = x.Key,
+															LocaleId = x.LocaleId,
+															Hash = x.Hash,
+															Scope = x.Scope,
+															Text = x.Text,
+															Translation = x.Translation,
+															IsDeleted = x.IsDeleted()
+														})
+											);
 					break;
 
 				case "edit":
-					
 					if (!string.IsNullOrEmpty(query["id"]))
 					{
 						var key = 0;
@@ -126,72 +147,91 @@ namespace Knoema.Localization.Web
 					}
 					break;
 
-				case "delete":				
-					var delete = _manager.Get(int.Parse(query["id"]));
-					if (delete != null)
-						_manager.Delete(delete);
-					break;
-
 				case "cleardb":
 					_manager.ClearDB();
 					break;
 
-				case "disable":
-						var disable = _manager.Get(int.Parse(query["id"]));
-						if (disable != null)
-						{
-							_manager.Disable(disable);
-							response = disable.Translation;
-						}
+				case "delete":
+					var toDelete = _manager.Get(int.Parse(query["id"]));
+					if (toDelete != null)
+					{
+						_manager.Delete(toDelete);
+						response = toDelete.Translation;
+					}
+					break;
+
+				case "recover":
+					var toRecover = _manager.Get(int.Parse(query["id"]));
+					if (toRecover != null)
+					{
+						_manager.Recover(toRecover);
+						response = toRecover.Translation;
+					}
 					break;
 
 				case "create":
-					try
-					{
-						var culture = new CultureInfo(query["culture"]);
-						_manager.CreateCulture(new CultureInfo(query["culture"]));
-						response = culture.Name;
-					}
-					catch (CultureNotFoundException) { }
+					if(string.IsNullOrEmpty(query["culture"]))
+						throw new CultureNotFoundException("Language name is empty.");
+
+					_manager.CreateCulture(culture);
+					response = culture.Name;
 				break;
 
 				case "export":
-					var filepath = Path.GetTempFileName();
+					try
+					{
+						var filepath = Path.GetTempFileName();
 
-					var objects = _manager.GetAll(new CultureInfo(query["culture"]));
-					var scope = query["scope"];
-					if (!string.IsNullOrEmpty(scope))
-						objects = objects.Where(obj => obj.Scope.ToLower().Contains(scope.ToLower()));
+						var objects = _manager.GetAll(culture);
+						var scope = query["scope"];
+						if (!string.IsNullOrEmpty(scope))
+							objects = objects.Where(obj => obj.Scope.ToLower().Contains(scope.ToLower()));
 
-					var data = objects.Select(x =>
-						new
-						{
-							LocaleId = x.LocaleId,
-							Hash = x.Hash,
-							Scope = x.Scope,
-							Text = x.Text,
-							Translation = x.Translation
-						});
+						var data = objects.Select(x =>
+							new
+							{
+								LocaleId = x.LocaleId,
+								Hash = x.Hash,
+								Scope = x.Scope,
+								Text = x.Text,
+								Translation = x.Translation
+							});
 
-					File.WriteAllText(filepath, serializer.Serialize(data));		
+						File.WriteAllText(filepath, serializer.Serialize(data));
 
-					context.Response.ContentType = "application/json";
-					context.Response.AppendHeader("Content-Disposition", "attachment; filename=" + query["culture"] + ".json");
-					context.Response.TransmitFile(filepath);
-					context.Response.End();			
-	
+						context.Response.ContentType = "application/json";
+						context.Response.AppendHeader("Content-Disposition", "attachment; filename=" + culture + ".json");
+						context.Response.TransmitFile(filepath);
+					}
+					catch (Exception e)
+					{
+						response = "Error: " + e.Message;
+					}
 					break;
 
 				case "import":
-					if (context.Request.Files.Count > 0)
+					try
 					{
-						for (int i = 0; i < context.Request.Files.Count; i++)
-							using (var reader = new StreamReader(context.Request.Files[i].InputStream))
-							{
-								var json = reader.ReadToEnd();
-								_manager.Import(
-									serializer.Deserialize<IEnumerable<Repository.LocalizedObject>>(json).ToArray());
-							}
+						if (context.Request.Files.Count > 0)
+						{
+							for (int i = 0; i < context.Request.Files.Count; i++)
+								using (var reader = new StreamReader(context.Request.Files[i].InputStream))
+								{
+									var json = reader.ReadToEnd();
+									_manager.Import(
+										serializer.Deserialize<IEnumerable<Repository.LocalizedObject>>(json).ToArray());
+								}
+
+							response = "Success";
+						}
+					}
+					catch (ArgumentNullException e)
+					{
+						response = "Error: choose file to import";
+					}
+					catch (Exception e)
+					{
+						response = "Error: " + e.Message;
 					}
 					break;
 
@@ -214,27 +254,19 @@ namespace Knoema.Localization.Web
 					}
 					break;
 				case "hint":
-					try
-					{
-						response = serializer.Serialize(
-							_manager.GetLocalizedObjects(
-								new CultureInfo(query["culture"]), query["text"])
-								.Where(x => !string.IsNullOrEmpty(x.Translation))
+					response = serializer.Serialize(
+						_manager.GetLocalizedObjects(culture, query["text"])
+								.Where(x => !string.IsNullOrEmpty(x.Translation) && !x.IsDeleted())
 								.Select(x => x.Translation)
 								.Distinct()
-						);
-					}
-					catch (CultureNotFoundException) { }
+					);
 					break;
 				case "search":
-					try
-					{
-						response = serializer.Serialize(
-							_manager.GetLocalizedObjects(
-								new CultureInfo(query["culture"]), query["text"], false)
-						);
-					}
-					catch (CultureNotFoundException) { }
+					resources = _manager.GetLocalizedObjects(culture, query["text"], false);
+					if (!loadDeleted)
+						resources = resources.Where(obj => !obj.IsDeleted());
+
+					response = serializer.Serialize(resources);
 					break;
 			}
 
@@ -419,7 +451,7 @@ namespace Knoema.Localization.Web
 		{
 			var tree = new List<TreeNode>();
 
-			foreach (var obj in lst)
+			foreach (var obj in lst.OrderBy(x => x.Scope))
 			{
 				if (obj.Scope == null)
 					continue;
