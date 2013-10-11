@@ -171,7 +171,7 @@ namespace Knoema.Localization.Web
 
 				case "create":
 					if(string.IsNullOrEmpty(query["culture"]))
-						throw new Exception("Language name is empty.");
+						throw new CultureNotFoundException("Language name is empty.");
 
 					_manager.CreateCulture(culture);
 					response = culture.Name;
@@ -225,12 +225,13 @@ namespace Knoema.Localization.Web
 							response = "Success";
 						}
 					}
+					catch (ArgumentNullException e)
+					{
+						response = "Error: choose file to import";
+					}
 					catch (Exception e)
 					{
-						if (e is ArgumentNullException)
-							response = "Error: choose file to import";
-						else
-							response = "Error: " + e.Message;
+						response = "Error: " + e.Message;
 					}
 					break;
 
