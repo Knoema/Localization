@@ -199,8 +199,7 @@ namespace Knoema.Localization
 				obj.Delete();
 
 			Repository.Save(list);
-			if (LocalizationCache.Available)
-				LocalizationCache.Clear();
+			LocalizationCache.Clear();
 		}
 
 		public void Recover(params ILocalizedObject[] list)
