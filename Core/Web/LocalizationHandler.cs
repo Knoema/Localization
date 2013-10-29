@@ -96,7 +96,7 @@ namespace Knoema.Localization.Web
 
 			switch (endpoint)
 			{
-				case "cultures":				
+				case "cultures":
 					response = serializer.Serialize(_manager.GetCultures().Where(x => x.LCID != DefaultCulture.Value.LCID).Select(x => x.Name));
 					break;
 
@@ -110,7 +110,6 @@ namespace Knoema.Localization.Web
 
 				case "table":
 					resources = _manager.GetAll(culture);
-
 					if (!loadDeleted)
 						resources = resources.Where(obj => !obj.IsDeleted());
 
@@ -178,35 +177,29 @@ namespace Knoema.Localization.Web
 				break;
 
 				case "export":
-					try
-					{
-						var filepath = Path.GetTempFileName();
+					var filepath = Path.GetTempFileName();
 
-						var objects = _manager.GetAll(culture);
-						var scope = query["scope"];
-						if (!string.IsNullOrEmpty(scope))
-							objects = objects.Where(obj => obj.Scope.ToLower().Contains(scope.ToLower()));
+					var objects = _manager.GetAll(culture);
+					var scope = query["scope"];
+					if (!string.IsNullOrEmpty(scope))
+						objects = objects.Where(obj => obj.Scope.ToLower().Contains(scope.ToLower()));
 
-						var data = objects.Select(x =>
-							new
-							{
-								LocaleId = x.LocaleId,
-								Hash = x.Hash,
-								Scope = x.Scope,
-								Text = x.Text,
-								Translation = x.Translation
-							});
+					var data = objects.Select(x =>
+						new
+						{
+							LocaleId = x.LocaleId,
+							Hash = x.Hash,
+							Scope = x.Scope,
+							Text = x.Text,
+							Translation = x.Translation
+						});
 
-						File.WriteAllText(filepath, serializer.Serialize(data));
+					File.WriteAllText(filepath, serializer.Serialize(data));
 
-						context.Response.ContentType = "application/json";
-						context.Response.AppendHeader("Content-Disposition", "attachment; filename=" + culture + ".json");
-						context.Response.TransmitFile(filepath);
-					}
-					catch (Exception e)
-					{
-						response = "Error: " + e.Message;
-					}
+					context.Response.ContentType = "application/json";
+					context.Response.AppendHeader("Content-Disposition", "attachment; filename=" + culture + ".json");
+					context.Response.TransmitFile(filepath);
+
 					break;
 
 				case "import":
@@ -229,29 +222,20 @@ namespace Knoema.Localization.Web
 					{
 						response = "Error: choose file to import";
 					}
-					catch (Exception e)
-					{
-						response = "Error: " + e.Message;
-					}
+
 					break;
 
 				case "push":
-					try
+					if (string.IsNullOrEmpty(query["scope"]) || string.IsNullOrEmpty(query["text"]))
+						BadRequest(context);
+					else if (!LocalizationManager.Instance.GetCulture().IsDefault())
 					{
-						if (string.IsNullOrEmpty(query["scope"]) || string.IsNullOrEmpty(query["text"]))
-							BadRequest(context);
-						else if (!LocalizationManager.Instance.GetCulture().IsDefault())
-						{
-							_manager.Translate(query["scope"], query["text"]);
-							response = "Success: \"" + query["text"] + "\" was added to scope \"" + query["scope"] + "\"";
-						}
-						else
-							response = "Success: default culture, localization was not added";
+						_manager.Translate(query["scope"], query["text"]);
+						response = "Success: \"" + query["text"] + "\" was added to scope \"" + query["scope"] + "\"";
 					}
-					catch (Exception e)
-					{
-						response = "Error: " + e.Message;
-					}
+					else
+						response = "Success: default culture, localization was not added";
+
 					break;
 				case "hint":
 					response = serializer.Serialize(
