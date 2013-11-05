@@ -86,6 +86,7 @@ div#localization div.popup div.content
 	height: 600px;
 	box-shadow: 0px 1px 15px #555;
 	background-color: #fff;
+	direction: ltr;
 }
 
 div#localization div.popup div.content div.close
