@@ -8,7 +8,6 @@ var localization = (function ($) {
 	};
 
 	var addPopup = function () {
-
 		var container = getContainer();
 		$.get('{appPath}/_localization/popup.html', function (result) {
 
@@ -59,6 +58,7 @@ var localization = (function ($) {
 	var addResourcesTab = function () {
 		var container = getContainer().find('div.tab');
 		container.empty();
+
 		container._busy(
 			$.get('{appPath}/_localization/resources.html', function (result) {
 
@@ -74,7 +74,9 @@ var localization = (function ($) {
 				});
 
 				container.find('input#showDeleted').click(function () {
-					loadResources();
+					var culture = $('#culture').val();
+					if (culture.toLowerCase() != 'en-us')
+						loadResources(culture);
 				});
 			})
 		);
@@ -134,32 +136,30 @@ var localization = (function ($) {
 		);
 	};
 
-	var loadResources = function () {
+	var loadResources = function (culture) {
 
-		var culture = $('#culture');
-
-		culture.change(function () {
-			tree(culture.val());
+		var $culture = $('#culture');
+		$culture.unbind('change').bind('change', function () {
+			tree($culture.val());
 		});
-
-		culture.empty();
+		$culture.empty();
 
 		var currentCulture = '{currentCulture}';
-		
-		culture._busy(
+
+		$culture._busy(
 			$.getJSON('{appPath}/_localization/api/cultures', function (result) {
 
 				if (result.length > 0) {
 					$.each(result, function () {
-						$(buildHtml('option', this.toString(), { 'value': this.toString(), 'selected': this.toString() == currentCulture })).appendTo(culture);
+						$(buildHtml('option', this.toString(), { 'value': this.toString(), 'selected': this.toString() == (culture || currentCulture) })).appendTo($culture);
 					});
 
-					if (currentCulture.toLowerCase() == 'en-us') {
-						culture.prepend(buildHtml('option', '', { 'value': currentCulture, 'selected': true }));
+					if (currentCulture.toLowerCase() == 'en-us' && !culture) {
+						$culture.prepend(buildHtml('option', '', { 'value': currentCulture, 'selected': true }));
 						$('#tree').html('Select language for translation.');
 					}
 					else
-						tree(culture.val());
+						tree(culture || $culture.val())
 				}
 				else
 					$('#tree').html('No languages. To create new language enter name (for example ru-ru) and press "create".');
@@ -280,7 +280,7 @@ var localization = (function ($) {
 				return false;
 			};
 		}
-	};	
+	};
 
 	var buildTable = function (result, container) {
 		container.empty();
