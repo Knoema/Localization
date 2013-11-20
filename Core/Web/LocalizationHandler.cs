@@ -62,34 +62,36 @@ namespace Knoema.Localization.Web
 
 		public void ProcessRequest(HttpContext context)
 		{
-			try
-			{
-				string response;
+			string response;
+			if (context.Request.Url.AbsolutePath.Contains("/_localization/api"))
+				response = Api(
+						context,
+						context.Request.Url.Segments[context.Request.Url.Segments.Length - 1],
+						context.Request.Params);
+			else
+				response = R(
+						context,
+						GetResourcePath(context.Request.AppRelativeCurrentExecutionFilePath));
 
-				if (context.Request.Url.AbsolutePath.Contains("/_localization/api"))
-					response = Api(
-							context,
-							context.Request.Url.Segments[context.Request.Url.Segments.Length - 1],
-							context.Request.Params);
-				else
-					response = R(
-							context,
-							GetResourcePath(context.Request.AppRelativeCurrentExecutionFilePath));
-
-				context.Response.Write(response);
-			}
-			catch (Exception e)
-			{
-				context.Response.StatusCode = (int)System.Net.HttpStatusCode.BadRequest;
-				context.Response.Write("Error: " + e.Message);
-			}
+			context.Response.Write(response);
 		}
 
 		private string Api(HttpContext context, string endpoint, NameValueCollection query)
 		{
 			var serializer = new JavaScriptSerializer();
 			var response = string.Empty;
-			var culture = string.IsNullOrEmpty(query["culture"]) ? DefaultCulture.Value : new CultureInfo(query["culture"]);
+			var culture = DefaultCulture.Value;
+			try
+			{
+				if (!string.IsNullOrEmpty(query["culture"]))
+					culture = new CultureInfo(query["culture"]);
+			}
+			catch (CultureNotFoundException e)
+			{
+				context.Response.StatusCode = (int)System.Net.HttpStatusCode.BadRequest;
+				return "Error: invalid culture name \"" + query["culture"] + "\".";
+			}
+
 			IEnumerable<ILocalizedObject> resources = null;
 			var loadDeleted = false;
 			bool.TryParse(query["loadDeleted"], out loadDeleted);
@@ -169,36 +171,50 @@ namespace Knoema.Localization.Web
 					break;
 
 				case "create":
-					if(string.IsNullOrEmpty(query["culture"]))
-						throw new CultureNotFoundException("Language name is empty.");
+					if (string.IsNullOrEmpty(query["culture"]))
+					{
+						context.Response.StatusCode = (int)System.Net.HttpStatusCode.BadRequest;
+						response = "Error: language name is empty.";
+					}
+					else
+					{
+						_manager.CreateCulture(culture);
+						response = culture.Name;
+					}
 
-					_manager.CreateCulture(culture);
-					response = culture.Name;
-				break;
+					break;
 
 				case "export":
-					var filepath = Path.GetTempFileName();
+					try
+					{
+						var filepath = Path.GetTempFileName();
 
-					var objects = _manager.GetAll(culture);
-					var scope = query["scope"];
-					if (!string.IsNullOrEmpty(scope))
-						objects = objects.Where(obj => obj.Scope.ToLower().Contains(scope.ToLower()));
+						var objects = _manager.GetAll(culture);
+						var scope = query["scope"];
+						if (!string.IsNullOrEmpty(scope))
+							objects = objects.Where(obj => obj.Scope.ToLower().Contains(scope.ToLower()));
 
-					var data = objects.Select(x =>
-						new
-						{
-							LocaleId = x.LocaleId,
-							Hash = x.Hash,
-							Scope = x.Scope,
-							Text = x.Text,
-							Translation = x.Translation
-						});
+						var data = objects.Select(x =>
+							new
+							{
+								LocaleId = x.LocaleId,
+								Hash = x.Hash,
+								Scope = x.Scope,
+								Text = x.Text,
+								Translation = x.Translation
+							});
 
-					File.WriteAllText(filepath, serializer.Serialize(data));
+						File.WriteAllText(filepath, serializer.Serialize(data));
 
-					context.Response.ContentType = "application/json";
-					context.Response.AppendHeader("Content-Disposition", "attachment; filename=" + culture + ".json");
-					context.Response.TransmitFile(filepath);
+						context.Response.ContentType = "application/json";
+						context.Response.AppendHeader("Content-Disposition", "attachment; filename=" + culture + ".json");
+						context.Response.TransmitFile(filepath);
+					}
+					catch (Exception e)
+					{
+						context.Response.StatusCode = (int)System.Net.HttpStatusCode.BadRequest;
+						response = "Error: " + e.Message;
+					}
 
 					break;
 
@@ -215,12 +231,18 @@ namespace Knoema.Localization.Web
 										serializer.Deserialize<IEnumerable<Repository.LocalizedObject>>(json).ToArray());
 								}
 
-							response = "Success";
+							response = "Import finished successfully.";
 						}
 					}
-					catch (ArgumentNullException e)
+					catch (ArgumentNullException)
 					{
-						response = "Error: choose file to import";
+						context.Response.StatusCode = (int)System.Net.HttpStatusCode.BadRequest;
+						response = "Error: choose file to import.";
+					}
+					catch (Exception e)
+					{
+						context.Response.StatusCode = (int)System.Net.HttpStatusCode.BadRequest;
+						response = "Error: " + e.Message;
 					}
 
 					break;

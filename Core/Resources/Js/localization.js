@@ -106,19 +106,14 @@ var localization = (function ($) {
 					$('#export-import-frame').load(function () {
 						d.resolve();
 						var responseText = $('#export-import-frame').contents().find('body').html();
-						if (responseText.indexOf('Error') > -1)
-							container.find('#status label').text(responseText);
-						else
-							container.find('#status label').text('Import finished successfully.');
-
+						container.find('#status label').text(responseText);
 					});
 				});
 
 				$('input#export').click(function () {
 					$('#export-import-frame').load(function () {
 						var responseText = $('#export-import-frame').contents().find('body').html();
-						if (responseText.indexOf('Error') > -1)
-							container.find('#status label').text(responseText);
+						container.find('#status label').text(responseText);
 					});
 				});
 
