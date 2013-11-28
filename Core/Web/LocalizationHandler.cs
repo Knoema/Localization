@@ -79,6 +79,8 @@ namespace Knoema.Localization.Web
 		private string Api(HttpContext context, string endpoint, NameValueCollection query)
 		{
 			var serializer = new JavaScriptSerializer();
+			serializer.MaxJsonLength = Int32.MaxValue;
+
 			var response = string.Empty;
 			var culture = DefaultCulture.Value;
 			try
