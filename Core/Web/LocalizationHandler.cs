@@ -156,14 +156,22 @@ namespace Knoema.Localization.Web
 				break;
 
 				case "export":
+					
 					var filepath = Path.GetTempFileName();
+					var res = new List<ILocalizedObject>();
 
 					var objects = _manager.GetAll(new CultureInfo(query["culture"]));
 					var scope = query["scope"];
-					if (!string.IsNullOrEmpty(scope))
-						objects = objects.Where(obj => obj.Scope.ToLower().Contains(scope.ToLower()));
 
-					var data = objects.Select(x =>
+					if (!string.IsNullOrEmpty(scope))
+					{
+						var scopes = scope.Split(',').Select(s => s.Trim());
+
+						foreach (var s in scopes)
+							res.AddRange(objects.Where(obj => obj.Scope.ToLowerInvariant().Contains(s.ToLowerInvariant())));
+					}
+
+					var data = res.Select(x =>
 						new
 						{
 							LocaleId = x.LocaleId,

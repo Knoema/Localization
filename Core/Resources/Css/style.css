@@ -395,3 +395,10 @@ div#localization div.popup div#import div#status div
 	display: inline;
 	top: 4px;
 }
+
+div#localization div.popup div#import textarea
+{
+	width: 250px;
+	height: 50px;
+	margin-top: 5px;
+}
