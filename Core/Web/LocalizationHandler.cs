@@ -170,6 +170,8 @@ namespace Knoema.Localization.Web
 						foreach (var s in scopes)
 							res.AddRange(objects.Where(obj => obj.Scope.ToLowerInvariant().Contains(s.ToLowerInvariant())));
 					}
+					else
+						res.AddRange(objects);
 
 					var data = res.Select(x =>
 						new
