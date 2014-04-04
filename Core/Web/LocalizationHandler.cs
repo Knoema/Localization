@@ -204,7 +204,45 @@ namespace Knoema.Localization.Web
 							}
 					}
 					break;
+				case "bulkimport":
+					if (context.Request.Files.Count > 0)
+					{
+						var lst = new List<ILocalizedObject>();
 
+						for (int i = 0; i < context.Request.Files.Count; i++)
+							using (var reader = new StreamReader(context.Request.Files[i].InputStream))
+							{
+								var row = 0;
+
+								while (!reader.EndOfStream)
+								{
+									row++;
+
+									var line = reader.ReadLine();
+									
+									if (row == 1)
+										continue;
+
+									if (!string.IsNullOrEmpty(line))
+									{
+										var values = line.Split('\t');
+
+										if (values.Length == 4)
+											lst.Add(new Repository.LocalizedObject()
+											{
+												Scope = values[0],
+												Text = values[1],
+												Translation = values[2],
+												LocaleId = int.Parse(values[3])
+											});
+									}
+
+								}
+							}
+						_manager.Import(lst.ToArray());
+							
+					}
+					break;
 				case "push":
 					try
 					{

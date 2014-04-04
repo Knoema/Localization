@@ -86,7 +86,7 @@ var localization = (function ($) {
 		container.empty();
 
 		container._busy(
-			$.get('{appPath}/_localization/import.html', function (result) {
+			$.get('{appPath}/_localization/import.html?rand=' + Math.random(), function (result) {
 
 				container.append(result);
 				container.find('div#create-lang input[type="button"]').click(createLanguage);
@@ -97,7 +97,9 @@ var localization = (function ($) {
 						$(buildHtml('option', this.toString(), { 'value': this.toString() })).appendTo($('#culture'));
 					});
 
-					$('input#import').click(function () {
+					$('input#import, input#bulkimport').change(function () {
+
+						$('form#' + $(this).attr('id')).submit();
 
 						var d = $.Deferred();
 						container.find('#status div')._busy(d);

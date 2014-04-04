@@ -220,6 +220,9 @@ namespace Knoema.Localization
 			var import = new List<ILocalizedObject>();
 			foreach (var obj in list)
 			{
+				if(obj.Hash == null)
+					obj.Hash = GetHash(obj.Scope.ToLowerInvariant() + obj.Text);
+
 				var stored = GetLocalizedObject(new CultureInfo(obj.LocaleId), obj.Hash);
 				if (stored != null)
 				{
