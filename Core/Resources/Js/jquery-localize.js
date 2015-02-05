@@ -48,7 +48,14 @@ var _epls = _epls || [];
 		if (_epli) 
 			_epls.push(scope.toLowerCase());		
 
-		if ({ignoreLocalization} || scope == undefined || scope == '')
+		var currentCulture = '{currentCulture}';
+		var initialCulture = $('input#initialCulture').val();
+		var isDefaultCulture = {ignoreLocalization};
+
+		if (initialCulture.toUpperCase() != currentCulture.toUpperCase())
+			return formatWith(text, formatterArguments);
+
+		if (isDefaultCulture || scope == undefined || scope == '')
 			return formatWith(text, formatterArguments);
 
 		var url = '{appPath}/_localization/api/push';

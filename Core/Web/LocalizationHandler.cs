@@ -23,24 +23,20 @@ namespace Knoema.Localization.Web
 
 			if(admin)
 			{
-				include += GetResource(GetResourcePath("include-admin.html"));			
-				include = include.Replace("{localizationScope}",
-					scope == null 
-						? string.Empty 
-						: "'" + string.Join("','", scope) + "'"
-				);
+				include += GetResource(GetResourcePath("include-admin.html"));
+				include = include.Replace("{localizationScope}", scope == null ? string.Empty : "'" + string.Join("','", scope) + "'");
 			}
 
 			var names = typeof(LocalizationHandler).Assembly.GetManifestResourceNames();
+		
 			foreach (var n in names)
 			{
 				var ext = Path.GetExtension(n);
-				if (ext == ".js" || ext == ".css")
-				{
-					var p = n.Split('.');
-					include = include.Replace("{" + p[p.Length - 2] + "}", GetResourceHash(n));
-				}
+				if (ext == ".js" || ext == ".css")				
+					include = include.Replace("{hash}", GetResourceHash(n));		
 			}
+
+			include = include.Replace("{initialCulture}", LocalizationManager.Instance.GetCulture());
 
 			return include.Replace("{appPath}", GetAppPath());
 		}
