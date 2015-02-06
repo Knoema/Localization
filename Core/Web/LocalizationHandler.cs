@@ -5,11 +5,13 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Globalization;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Web;
 using System.Web.Script.Serialization;
+using Microsoft.Ajax.Utilities;
 
 namespace Knoema.Localization.Web
 {
@@ -310,8 +312,27 @@ namespace Knoema.Localization.Web
 			switch (Path.GetExtension(path))
 			{
 				case ".js":
+					
 					response.ContentType = "application/javascript";
+
+					if (IsGZipSupported())
+					{
+						var encoding = HttpContext.Current.Request.Headers["Accept-Encoding"];
+
+						if (encoding.Contains("gzip"))
+						{
+							response.Filter = new GZipStream(response.Filter, CompressionMode.Compress);
+							response.AppendHeader("Content-Encoding", "gzip");
+						}
+						else
+						{
+							response.Filter = new DeflateStream(response.Filter, CompressionMode.Compress);
+							response.AppendHeader("Content-Encoding", "deflate");
+						}
+					}
+
 					output = GetJsFile(path);
+					
 					break;
 				case ".css":
 					response.ContentType = "text/css";
@@ -346,14 +367,41 @@ namespace Knoema.Localization.Web
 			var current = LocalizationManager.Instance.GetCulture();
 			var output = GetResource(path).Replace("{appPath}", GetAppPath()).Replace("{currentCulture}", current);
 
-			if (IgnoreLocalization())				
-				return output.Replace("{ignoreLocalization}", "true");			
-		
-			var resources = new JavaScriptSerializer().Serialize(_manager.GetScriptResources(new CultureInfo(current)));
-			
-			return output.Replace("{data}", HttpUtility.JavaScriptStringEncode(resources)).Replace("{ignoreLocalization}", "false");
+			if (IgnoreLocalization())
+				output = output.Replace("{ignoreLocalization}", "true");
+			else
+			{
+				var resources = new JavaScriptSerializer().Serialize(_manager.GetScriptResources(new CultureInfo(current)));
+				output = output.Replace("{data}", HttpUtility.JavaScriptStringEncode(resources)).Replace("{ignoreLocalization}", "false");	
+			}
+
+			if (!HttpContext.Current.IsDebuggingEnabled)
+				return MinifyJsFile(output);
+
+			return output;
 		}
 		
+		private static string MinifyJsFile(string source)
+		{
+			var minifier = new Minifier();
+			var result = minifier.MinifyJavaScript(source);
+
+			if (minifier.ErrorList.Any())
+				result += string.Join(", ", minifier.ErrorList);	
+
+			return result;
+		}
+		
+		private static bool IsGZipSupported()
+		{
+			var acceptEncoding = HttpContext.Current.Request.Headers["Accept-Encoding"];
+
+			if (!string.IsNullOrEmpty(acceptEncoding) && (acceptEncoding.Contains("gzip") || acceptEncoding.Contains("deflate")))
+				return true;
+
+			return false;
+		}
+
 		private static string GetResourceHash(string path)
 		{
 			var hash = string.Empty;
