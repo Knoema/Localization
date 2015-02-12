@@ -6,6 +6,8 @@ using System.Linq;
 using System.Resources;
 using System.Web.Mvc;
 
+using DA = System.ComponentModel.DataAnnotations;
+
 namespace Knoema.Localization.Mvc
 {
 	public class ValidationLocalizer : DataAnnotationsModelValidatorProvider
@@ -80,10 +82,10 @@ namespace Knoema.Localization.Mvc
 				};
 			}
 
-			if (attribute is CompareAttribute)
+			if (attribute is DA.CompareAttribute)
 			{
-				var attr = (CompareAttribute)attribute;
-				result = new CompareAttribute(attr.OtherProperty);
+				var attr = (DA.CompareAttribute)attribute;
+				result = new DA.CompareAttribute(attr.OtherProperty);
 			}
 
 			if (attribute is DataTypeAttribute)
