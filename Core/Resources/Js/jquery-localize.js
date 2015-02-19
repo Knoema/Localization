@@ -6,6 +6,9 @@
     }
 }(function ($) {
 
+	﻿var _epli = _epli || false;
+	var _epls = _epls || [];
+
 	var formatWith = function(text, formatterArguments){
 		if(typeof(formatterArguments) !== 'object' || formatterArguments == null)
 			return text;
