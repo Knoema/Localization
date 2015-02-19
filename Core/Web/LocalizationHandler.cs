@@ -43,6 +43,16 @@ namespace Knoema.Localization.Web
 			return include.Replace("{appPath}", GetAppPath());
 		}
 
+		public static string JqueryLocalizeUrl()
+		{
+			return "{appPath}/_localization/jquery-localize.{hash}.js".Replace("{appPath}", GetAppPath()).Replace("{hash}", GetResourceHash("jquery-localize.js"));
+		}
+
+		public static string InitialCultureInputElementStr()
+		{
+			return "<input type=\"hidden\" id=\"initialCulture\" value=\"" + LocalizationManager.Instance.GetCulture() + "\" />";
+		}
+
 		public bool IsReusable
 		{
 			get 

@@ -39,6 +39,14 @@ namespace Knoema.Localization.Mvc
 		{
 			return MvcHtmlString.Create(LocalizationHandler.RenderIncludes(admin, LocalizationManager.Instance.GetScope()));
 		}
+		public MvcHtmlString InitialCultureInputElement()
+		{
+			return MvcHtmlString.Create(LocalizationHandler.InitialCultureInputElementStr());
+		}
+		public String JqueryLocalizeUrl()
+		{
+			return LocalizationHandler.JqueryLocalizeUrl();
+		}	
 	}
 
 	public abstract class LocalizedWebViewPage<TModel> : LocalizedWebViewPage
