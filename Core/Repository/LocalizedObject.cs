@@ -1,7 +1,9 @@
-﻿
+﻿using System;
+
 namespace Knoema.Localization.Repository
 {
-	internal class LocalizedObject: ILocalizedObject
+	[Serializable]
+	internal class LocalizedObject : ILocalizedObject
 	{
 		public int Key { get; set; }
 		public int LocaleId { get; set; }
