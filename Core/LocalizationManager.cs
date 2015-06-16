@@ -156,10 +156,10 @@ namespace Knoema.Localization
 
 		public IEnumerable<ILocalizedObject> GetAll(CultureInfo culture)
 		{
-			IEnumerable<ILocalizedObject> lst = null;
+			IEnumerable<ILocalizedObject> result = null;
 			if (_initialBundlesCount > 0)
 			{
-				List<ILocalizedObject>[] bundles = new List<ILocalizedObject>[_initialBundlesCount];
+				var bundles = new List<ILocalizedObject>[_initialBundlesCount];
 				for (int i = 0; i < _initialBundlesCount; i++)
 				{
 					bundles[i] = LocalizationCache.Get<List<ILocalizedObject>>(GetBundleName(culture, i));
@@ -171,25 +171,28 @@ namespace Knoema.Localization
 					var lstCombined = new List<ILocalizedObject>();
 					foreach (var bundle in bundles)
 						lstCombined.AddRange(bundle);
-					lst = lstCombined;
+					result = lstCombined;
 				}
 			}
-			if (lst == null || lst.Count() == 0)
+			if (result == null || result.Count() == 0)
 			{
-				lst = Repository.GetAll(culture).ToList();
+				result = Repository.GetAll(culture).ToList();
+
 				if (_initialBundlesCount <= 0)
-					_initialBundlesCount = lst.Count() * 1024 / (1024 * 1024) * 4;
-				List<ILocalizedObject>[] bundles = new List<ILocalizedObject>[_initialBundlesCount];
+					_initialBundlesCount = result.Count() * 1024 / (1024 * 1024) * 4;
+
+				var bundles = new List<ILocalizedObject>[_initialBundlesCount];
 				for (int i = 0; i < _initialBundlesCount; i++)
 					bundles[i] = new List<ILocalizedObject>();
-				foreach (var obj in lst)
+
+				foreach (var obj in result)
 					bundles[GetBundleIndex(obj.Hash)].Add(obj);
 
 				for (int i = 0; i < _initialBundlesCount; i++)
 					LocalizationCache.Insert(GetBundleName(culture, i), bundles[i]);
 			}
 
-			return lst;
+			return result;
 		}
 
 		private static string GetBundleName(CultureInfo culture, int bundleIndex)
@@ -197,20 +200,20 @@ namespace Knoema.Localization
 			return string.Format("{0}_bundle{1}", culture.Name, bundleIndex);
 		}
 
-		private int GetBundleIndex(string Hash)
+		private int GetBundleIndex(string hash)
 		{
-			int index = Hash.GetHashCode();
+			int index = hash.GetHashCode();
 			if (index < 0)
 				index = -index;
 			index %= _initialBundlesCount;
 			return index;
 		}
 
-		public IEnumerable<ILocalizedObject> GetCachedListForHash(CultureInfo culture, string Hash)
+		public IEnumerable<ILocalizedObject> GetCachedListForHash(CultureInfo culture, string hash)
 		{
 			if (_initialBundlesCount <= 0)
 				return null;
-			return LocalizationCache.Get<List<ILocalizedObject>>(GetBundleName(culture, GetBundleIndex(Hash)));
+			return LocalizationCache.Get<List<ILocalizedObject>>(GetBundleName(culture, GetBundleIndex(hash)));
 		}
 
 		public IEnumerable<CultureInfo> GetCultures()
