@@ -45,6 +45,8 @@ namespace Sample
 			
 			// initialize repository
 			Knoema.Localization.LocalizationManager.Repository = new Knoema.Localization.EFProvider.LocalizationRepository();
+			// initialize cache provider
+			Knoema.Localization.LocalizationCache.Initialize(new HttpCache());
 
 			// configure localization of models
 			ModelValidatorProviders.Providers.Clear();
