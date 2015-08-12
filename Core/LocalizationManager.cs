@@ -17,6 +17,7 @@ namespace Knoema.Localization
 		private static object _lock = new object();
 		public static ILocalizationRepository Repository { get; set; }
 
+		private static object _lockBundlesCount = new object(); 
 		private int _initialBundlesCount = -1;
 
 		private static readonly LocalizationManager _instanse = new LocalizationManager();
@@ -157,6 +158,15 @@ namespace Knoema.Localization
 		public IEnumerable<ILocalizedObject> GetAll(CultureInfo culture)
 		{
 			IEnumerable<ILocalizedObject> result = null;
+
+			if (_initialBundlesCount <= 0)
+			{
+				lock (_lockBundlesCount)
+				{
+					if (_initialBundlesCount <= 0)
+						_initialBundlesCount = Repository.GetAll(new CultureInfo(1049)).Count() * 1024 / (1024 * 1024) * 4;
+				}
+			}
 			if (_initialBundlesCount > 0)
 			{
 				var bundles = new List<ILocalizedObject>[_initialBundlesCount];
@@ -177,9 +187,6 @@ namespace Knoema.Localization
 			if (result == null || result.Count() == 0)
 			{
 				result = Repository.GetAll(culture).ToList();
-
-				if (_initialBundlesCount <= 0)
-					_initialBundlesCount = result.Count() * 1024 / (1024 * 1024) * 4;
 
 				var bundles = new List<ILocalizedObject>[_initialBundlesCount];
 				for (int i = 0; i < _initialBundlesCount; i++)

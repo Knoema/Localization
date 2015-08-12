@@ -24,8 +24,11 @@ namespace Knoema.Localization
 			if (localTimeStamp == null || (DateTime?)localTimeStamp < timeStamp)
 			{
 				value = (T)_cache.Get(key);
-				_memoryCache[key] = value;
-				_memoryCache["stamp_" + key] = timeStamp;
+				if (value != null)
+				{
+					_memoryCache[key] = value;
+					_memoryCache["stamp_" + key] = timeStamp;
+				}
 			}
 			else
 				value = (T)_memoryCache[key];
