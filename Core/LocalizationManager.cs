@@ -164,7 +164,8 @@ namespace Knoema.Localization
 				lock (_lockBundlesCount)
 				{
 					if (_initialBundlesCount <= 0)
-						_initialBundlesCount = Repository.GetAll(new CultureInfo(1049)).Count() * 1024 / (1024 * 1024) * 4;
+						_initialBundlesCount = Repository.GetAll(new CultureInfo(1033)).Count() * 1024 / (1024 * 1024) * 4;
+					//there always would be items for english locale - they are added by default
 				}
 			}
 			if (_initialBundlesCount > 0)
