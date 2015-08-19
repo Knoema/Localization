@@ -41,7 +41,7 @@ namespace Knoema.Localization
 			}
 		}
 
-		public ILocalizedObject FindItemByCache(string Hash)
+		public ILocalizedObject FindItemByHash(string Hash)
 		{
 			List<ILocalizedObject> itemList;
 			if (!base.TryGetValue(Hash.GetHashCode(), out itemList))

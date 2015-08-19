@@ -413,7 +413,7 @@ namespace Knoema.Localization
 			if (lst == null || !lst.Any())
 				return GetAll(culture).FirstOrDefault(x => x.Hash == hash);
 			else
-				return lst.FindItemByCache(hash);
+				return lst.FindItemByHash(hash);
 		}
 
 		private string GetHash(string text)
