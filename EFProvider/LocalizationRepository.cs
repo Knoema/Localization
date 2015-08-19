@@ -64,5 +64,9 @@ namespace Knoema.Localization.EFProvider
 			SaveChanges();
 		}
 
+		public int GetCount(CultureInfo culture)
+		{
+			return Objects.Where(obj => obj.LocaleId == culture.LCID).Count();
+		}
 	}
 }
