@@ -339,10 +339,17 @@ namespace Knoema.Localization
 		public void SetCulture(CultureInfo culture)
 		{
 			Thread.CurrentThread.CurrentCulture = Thread.CurrentThread.CurrentUICulture = culture;
-			HttpContext.Current.Response.Cookies.Add(new HttpCookie(CookieName, culture.Name)
+
+			var cookie = HttpContext.Current.Response.Cookies[CookieName];
+
+			if (cookie == null)
 			{
-				Expires = DateTime.Now.AddYears(1),
-			});
+				cookie = new HttpCookie(CookieName, culture.Name);
+				HttpContext.Current.Response.Cookies.Add(cookie);
+			}
+
+			cookie.Expires = DateTime.Now.AddYears(1);
+			cookie.Value = culture.Name;
 		}
 
 		public string GetCulture()
