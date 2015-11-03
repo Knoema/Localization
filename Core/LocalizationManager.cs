@@ -336,15 +336,15 @@ namespace Knoema.Localization
 				return GetAll(culture).Where(x => x.Text.ToLowerInvariant().Contains(text.ToLowerInvariant()));
 		}
 
-		public void SetCulture(CultureInfo culture)
+		public void SetCulture(CultureInfo culture, string cookieName = LocalizationManager.CookieName)
 		{
 			Thread.CurrentThread.CurrentCulture = Thread.CurrentThread.CurrentUICulture = culture;
 
-			var cookie = HttpContext.Current.Response.Cookies[CookieName];
+			var cookie = HttpContext.Current.Response.Cookies[cookieName];
 
 			if (cookie == null)
 			{
-				cookie = new HttpCookie(CookieName, culture.Name);
+				cookie = new HttpCookie(cookieName, culture.Name);
 				HttpContext.Current.Response.Cookies.Add(cookie);
 			}
 
@@ -378,14 +378,22 @@ namespace Knoema.Localization
 			return cultures.Distinct().ToList();
 		}
 
-		public string GetCultureFromCookie()
+		public string GetCultureFromCookie(string cookieName = LocalizationManager.CookieName)
 		{
-			var cookie = HttpContext.Current.Request.Cookies[LocalizationManager.CookieName];
+			var cookie = HttpContext.Current.Request.Cookies[cookieName] ?? HttpContext.Current.Request.Cookies[LocalizationManager.CookieName];
 
 			if (cookie != null)
 				return cookie.Value;
 
 			return null;
+		}
+
+		public string GetCookieName(string prefix = null)
+		{
+			if (prefix == null)
+				return LocalizationManager.CookieName;
+
+			return string.Format("{0}-{1}", prefix, LocalizationManager.CookieName);
 		}
 
 		public string GetCultureFromQuery()
