@@ -6,7 +6,7 @@ using log4net;
 
 namespace Knoema.Localization
 {
-	public class DebugLog
+	public class DebugLogging
 	{
 		private static ILog _logger = null;
 
