@@ -51,10 +51,12 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ILocalizationCache.cs" />
     <Compile Include="LocalizationCache.cs" />
     <Compile Include="DefaultCulture.cs" />
     <Compile Include="Extensions\StringExtensions.cs" />
     <Compile Include="LocalizationManager.cs" />
+    <Compile Include="LocalizedObjectList.cs" />
     <Compile Include="Repository\LocalizedObject.cs" />
     <Compile Include="Repository\LocalizedObjectExtension.cs" />
     <Compile Include="Web\LocalizationHttpModule.cs" />

@@ -17,25 +17,25 @@ namespace Knoema.Localization.Web
 {
 	public class LocalizationHandler : IHttpHandler
 	{
-		private static readonly LocalizationManager _manager =  LocalizationManager.Instance;
+		private static readonly LocalizationManager _manager = LocalizationManager.Instance;
 
 		public static string RenderIncludes(bool admin, List<string> scope)
 		{
 			var include = GetResource(GetResourcePath("include.html"));
 
-			if(admin)
+			if (admin)
 			{
 				include += GetResource(GetResourcePath("include-admin.html"));
 				include = include.Replace("{localizationScope}", scope == null ? string.Empty : "'" + string.Join("','", scope) + "'");
 			}
 
 			var names = typeof(LocalizationHandler).Assembly.GetManifestResourceNames();
-		
+
 			foreach (var n in names)
 			{
 				var ext = Path.GetExtension(n);
-				if (ext == ".js" || ext == ".css")				
-					include = include.Replace("{hash}", GetResourceHash(n));		
+				if (ext == ".js" || ext == ".css")
+					include = include.Replace("{hash}", GetResourceHash(n));
 			}
 
 			include = include.Replace("{initialCulture}", LocalizationManager.Instance.GetCulture());
@@ -45,7 +45,7 @@ namespace Knoema.Localization.Web
 
 		public bool IsReusable
 		{
-			get 
+			get
 			{
 				return true;
 			}
@@ -53,8 +53,8 @@ namespace Knoema.Localization.Web
 
 		static string GetAppPath()
 		{
-			return HttpContext.Current.Request.ApplicationPath == "/" 
-				? string.Empty 
+			return HttpContext.Current.Request.ApplicationPath == "/"
+				? string.Empty
 				: HttpContext.Current.Request.ApplicationPath;
 		}
 
@@ -82,9 +82,9 @@ namespace Knoema.Localization.Web
 
 			switch (endpoint)
 			{
-				case "cultures":				
+				case "cultures":
 					response = serializer.Serialize(
-						_manager.GetCultures().Where(x => x.LCID != DefaultCulture.Value.LCID).Select(x => x.Name));				
+						_manager.GetCultures().Where(x => x.LCID != DefaultCulture.Value.LCID).Select(x => x.Name));
 					break;
 
 				case "tree":
@@ -97,7 +97,7 @@ namespace Knoema.Localization.Web
 						GetTree(resources).Where(x => x.IsRoot));
 					break;
 
-				case "table":	
+				case "table":
 					response = serializer
 						.Serialize(
 							_manager.GetAll(new CultureInfo(query["culture"]))
@@ -106,7 +106,7 @@ namespace Knoema.Localization.Web
 					break;
 
 				case "edit":
-					
+
 					if (!string.IsNullOrEmpty(query["id"]))
 					{
 						var key = 0;
@@ -118,16 +118,16 @@ namespace Knoema.Localization.Web
 							if (edit != null)
 							{
 								edit.Translation = query["translation"];
-								_manager.Save(edit);
+								_manager.Save(new CultureInfo(edit.LocaleId), edit);
 							}
 						}
 					}
 					break;
 
-				case "delete":				
+				case "delete":
 					var delete = _manager.Get(int.Parse(query["id"]));
 					if (delete != null)
-						_manager.Delete(delete);
+						_manager.Delete(new CultureInfo(delete.LocaleId), delete);
 					break;
 
 				case "cleardb":
@@ -135,12 +135,12 @@ namespace Knoema.Localization.Web
 					break;
 
 				case "disable":
-						var disable = _manager.Get(int.Parse(query["id"]));
-						if (disable != null)
-						{
-							_manager.Disable(disable);
-							response = disable.Translation;
-						}
+					var disable = _manager.Get(int.Parse(query["id"]));
+					if (disable != null)
+					{
+						_manager.Disable(new CultureInfo(disable.LocaleId), disable);
+						response = disable.Translation;
+					}
 					break;
 
 				case "create":
@@ -151,10 +151,10 @@ namespace Knoema.Localization.Web
 						response = culture.Name;
 					}
 					catch (CultureNotFoundException) { }
-				break;
+					break;
 
 				case "export":
-					
+
 					var filepath = Path.GetTempFileName();
 					var res = new List<ILocalizedObject>();
 
@@ -181,13 +181,13 @@ namespace Knoema.Localization.Web
 							Translation = x.Translation
 						});
 
-					File.WriteAllText(filepath, serializer.Serialize(data));		
+					File.WriteAllText(filepath, serializer.Serialize(data));
 
 					context.Response.ContentType = "application/json";
 					context.Response.AppendHeader("Content-Disposition", "attachment; filename=" + query["culture"] + ".json");
 					context.Response.TransmitFile(filepath);
-					context.Response.End();			
-	
+					context.Response.End();
+
 					break;
 
 				case "import":
@@ -217,7 +217,7 @@ namespace Knoema.Localization.Web
 									row++;
 
 									var line = reader.ReadLine();
-									
+
 									if (row == 1)
 										continue;
 
@@ -238,7 +238,7 @@ namespace Knoema.Localization.Web
 								}
 							}
 						_manager.Import(lst.ToArray());
-							
+
 					}
 					break;
 				case "push":
@@ -291,7 +291,7 @@ namespace Knoema.Localization.Web
 		{
 			if (LocalizationManager.Repository == null)
 				return true;
-			
+
 			var current = LocalizationManager.Instance.GetCulture();
 
 			if (current.IsDefault())
@@ -300,10 +300,10 @@ namespace Knoema.Localization.Web
 			var cultures = LocalizationManager.Instance.GetCultures();
 			if (cultures.Count() > 0 && !cultures.Contains(new CultureInfo(current)))
 				return true;
-				
-			return false;		
+
+			return false;
 		}
-		
+
 		private string R(HttpContext context, string path)
 		{
 			var response = context.Response;
@@ -312,7 +312,7 @@ namespace Knoema.Localization.Web
 			switch (Path.GetExtension(path))
 			{
 				case ".js":
-					
+
 					response.ContentType = "application/javascript";
 
 					if (IsGZipSupported())
@@ -332,7 +332,7 @@ namespace Knoema.Localization.Web
 					}
 
 					output = GetJsFile(path);
-					
+
 					break;
 				case ".css":
 					response.ContentType = "text/css";
@@ -358,7 +358,7 @@ namespace Knoema.Localization.Web
 			var cache = response.Cache;
 			cache.SetCacheability(System.Web.HttpCacheability.Public);
 			cache.SetExpires(DateTime.Now.AddDays(7));
-			cache.SetValidUntilExpires(true);	
+			cache.SetValidUntilExpires(true);
 			return output;
 		}
 
@@ -372,7 +372,7 @@ namespace Knoema.Localization.Web
 			else
 			{
 				var resources = new JavaScriptSerializer().Serialize(_manager.GetScriptResources(new CultureInfo(current)));
-				output = output.Replace("{data}", HttpUtility.JavaScriptStringEncode(resources)).Replace("{ignoreLocalization}", "false");	
+				output = output.Replace("{data}", HttpUtility.JavaScriptStringEncode(resources)).Replace("{ignoreLocalization}", "false");
 			}
 
 			if (!HttpContext.Current.IsDebuggingEnabled)
@@ -380,18 +380,18 @@ namespace Knoema.Localization.Web
 
 			return output;
 		}
-		
+
 		private static string MinifyJsFile(string source)
 		{
 			var minifier = new Minifier();
 			var result = minifier.MinifyJavaScript(source);
 
 			if (minifier.ErrorList.Any())
-				result += string.Join(", ", minifier.ErrorList);	
+				result += string.Join(", ", minifier.ErrorList);
 
 			return result;
 		}
-		
+
 		private static bool IsGZipSupported()
 		{
 			var acceptEncoding = HttpContext.Current.Request.Headers["Accept-Encoding"];
@@ -405,16 +405,16 @@ namespace Knoema.Localization.Web
 		private static string GetResourceHash(string path)
 		{
 			var hash = string.Empty;
-			
+
 			switch (Path.GetExtension(path).ToLowerInvariant())
 			{
-				case ".js":				
-					var content = "1.51" + 
+				case ".js":
+					var content = "1.51" +
 					 (path.EndsWith("jquery-localize.js") && LocalizationManager.Repository != null
 						? GetJsFile(path)
-						: GetStreamHash(GetResourceStream(path))); 
+						: GetStreamHash(GetResourceStream(path)));
 
-					hash = GetStringHash(content);										
+					hash = GetStringHash(content);
 					break;
 				case ".css":
 					hash = GetStreamHash(GetResourceStream(path));
@@ -438,13 +438,14 @@ namespace Knoema.Localization.Web
 				case ".css":
 					path = path + "Css.";
 					break;
-				case ".png": case ".gif":					
+				case ".png":
+				case ".gif":
 					path = path + "Img.";
 					break;
-				case ".html": 
+				case ".html":
 					path = path + "Html.";
 					break;
-				default:					
+				default:
 					break;
 			}
 
@@ -529,18 +530,18 @@ namespace Knoema.Localization.Web
 					var node = tree.FirstOrDefault(x => x.Scope.ToLowerInvariant() == path.ToLowerInvariant());
 					if (node == null)
 					{
-						node = new TreeNode(labels[i], path, i == 0, true);						
+						node = new TreeNode(labels[i], path, i == 0, true);
 						tree.Add(node);
 					}
 
 					if (i == labels.Length - 1)
-						node.Translated = !string.IsNullOrEmpty(obj.Translation) && node.Translated;	
+						node.Translated = !string.IsNullOrEmpty(obj.Translation) && node.Translated;
 
 					if (i > 0)
 					{
 						var parent = tree.FirstOrDefault(x => x.Scope.ToLowerInvariant() == path.Remove(path.LastIndexOf("/")).ToLowerInvariant());
-						if (!parent.Children.Contains(node))						
-							parent.Children.Add(node);						
+						if (!parent.Children.Contains(node))
+							parent.Children.Add(node);
 					}
 				}
 			}
