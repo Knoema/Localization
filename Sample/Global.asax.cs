@@ -42,7 +42,8 @@ namespace Sample
 
 			RegisterGlobalFilters(GlobalFilters.Filters);
 			RegisterRoutes(RouteTable.Routes);
-			
+			log4net.Config.XmlConfigurator.Configure();
+
 			// initialize repository
 			Knoema.Localization.LocalizationManager.Repository = new Knoema.Localization.EFProvider.LocalizationRepository();
 			// initialize cache provider

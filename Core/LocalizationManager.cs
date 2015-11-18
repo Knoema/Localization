@@ -58,6 +58,7 @@ namespace Knoema.Localization
 			// if null save object to db for all cultures 
 			if (obj == null)
 			{
+				DebugLogging.Logger.DebugFormat("Translation not found, create empty: {0} in {1} of language: {2}", text, scope, culture.LCID);
 				if (!cultures.Contains(DefaultCulture.Value))
 					cultures.Add(DefaultCulture.Value);
 
@@ -165,11 +166,15 @@ namespace Knoema.Localization
 				{
 					if (_initialBundlesCount <= 0)
 						_initialBundlesCount = Repository.GetCount(new CultureInfo(1033)) * 1024 / (1024 * 1024) * 4;
+					if (_initialBundlesCount == 0)
+						_initialBundlesCount = 1;
 					//there always would be items for english locale - they are added by default
 				}
+				DebugLogging.Logger.DebugFormat("New bundles count {0}", _initialBundlesCount);
 			}
 			if (_initialBundlesCount > 0)
 			{
+				DebugLogging.Logger.DebugFormat("Trying to load translations for culture {0} from cache", culture.LCID);
 				var bundles = new LocalizedObjectList[_initialBundlesCount];
 				for (int i = 0; i < _initialBundlesCount; i++)
 				{
@@ -187,6 +192,7 @@ namespace Knoema.Localization
 			}
 			if (result == null || !result.Any())
 			{
+				DebugLogging.Logger.DebugFormat("Loading all translations for culture {0} from DB", culture.LCID);
 				result = Repository.GetAll(culture).ToList();
 
 				var bundles = new LocalizedObjectList[_initialBundlesCount];
@@ -241,7 +247,10 @@ namespace Knoema.Localization
 			foreach (var obj in list)
 				bundlesToDelete.Add(GetBundleName(culture, GetBundleIndex(obj.Hash)));
 			foreach (var bundleName in bundlesToDelete)
+			{
+				DebugLogging.Logger.DebugFormat("Removing bundle from cache '{0}'", bundleName);
 				LocalizationCache.Remove(bundleName);
+			}
 		}
 
 		public void ClearDB(CultureInfo culture = null)
