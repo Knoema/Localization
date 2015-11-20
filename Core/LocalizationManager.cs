@@ -17,8 +17,8 @@ namespace Knoema.Localization
 		private static object _lock = new object();
 		public static ILocalizationRepository Repository { get; set; }
 
-		private static object _lockBundlesCount = new object(); 
-		private int _initialBundlesCount = -1;
+		private static object _lockBundlesCount = new object();
+		private int _initialBundlesCount = 256;
 
 		private static readonly LocalizationManager _instanse = new LocalizationManager();
 		public static LocalizationManager Instance
@@ -157,71 +157,56 @@ namespace Knoema.Localization
 
 		public IEnumerable<ILocalizedObject> GetAll(CultureInfo culture)
 		{
-			IEnumerable<ILocalizedObject> result = null;
-
-			if (_initialBundlesCount <= 0)
+			IEnumerable<ILocalizedObject> allObjects = null;
+			var bundles = new LocalizedObjectList[_initialBundlesCount];
+			for (int i = 0; i < _initialBundlesCount; i++)
 			{
-				lock (_lockBundlesCount)
+				bundles[i] = LocalizationCache.Get<LocalizedObjectList>(GetBundleName(culture, BundleIndexToHex(i)));
+				if (bundles[i] == null)
 				{
-					if (_initialBundlesCount <= 0)
-						_initialBundlesCount = Repository.GetCount(new CultureInfo(1033)) * 1024 / (1024 * 1024) * 4;
-					//there always would be items for english locale - they are added by default
+					if (allObjects == null)
+						allObjects = Repository.GetAll(culture);
+					bundles[i] = UpdateSingleBundle(culture, BundleIndexToHex(i), allObjects);
 				}
 			}
-			if (_initialBundlesCount > 0)
-			{
-				var bundles = new LocalizedObjectList[_initialBundlesCount];
-				for (int i = 0; i < _initialBundlesCount; i++)
-				{
-					bundles[i] = LocalizationCache.Get<LocalizedObjectList>(GetBundleName(culture, i));
-					if (bundles[i] == null)
-						break;
-				}
-				if (!bundles.Any(l => l == null))
-				{
-					var lstCombined = new LocalizedObjectList();
-					foreach (var bundle in bundles)
-						lstCombined.AddRange(bundle);
-					result = lstCombined.ToEnumerable();
-				}
-			}
-			if (result == null || !result.Any())
-			{
-				result = Repository.GetAll(culture).ToList();
 
-				var bundles = new LocalizedObjectList[_initialBundlesCount];
-				for (int i = 0; i < _initialBundlesCount; i++)
-					bundles[i] = new LocalizedObjectList();
-
-				foreach (var obj in result)
-					bundles[GetBundleIndex(obj.Hash)].Add(obj);
-
-				for (int i = 0; i < _initialBundlesCount; i++)
-					LocalizationCache.Insert(GetBundleName(culture, i), bundles[i]);
-			}
-
-			return result;
+			var lstCombined = new LocalizedObjectList();
+			foreach (var bundle in bundles)
+				lstCombined.AddRange(bundle);
+			return lstCombined.ToEnumerable();
 		}
 
-		private static string GetBundleName(CultureInfo culture, int bundleIndex)
+		private LocalizedObjectList UpdateSingleBundle(CultureInfo culture, string bundleHex, IEnumerable<ILocalizedObject> allObjects)
 		{
-			return string.Format("{0}_bundle{1}", culture.Name, bundleIndex);
+			var bundleObjects = allObjects.Where(x => x.Hash.ToLowerInvariant().Substring(0, 2) == bundleHex);
+			//only objects with correct Hash are loaded
+			var newBundle = new LocalizedObjectList();
+			foreach (var obj in bundleObjects)
+				newBundle.Add(obj);
+			LocalizationCache.Insert(GetBundleName(culture, bundleHex), newBundle);
+			return newBundle;
 		}
 
-		private int GetBundleIndex(string hash)
+		private static string GetBundleName(CultureInfo culture, string bundleHex)
 		{
-			int index = hash.GetHashCode();
-			if (index < 0)
-				index = -index;
-			index %= _initialBundlesCount;
-			return index;
+			return string.Format("{0}_bundle{1}", culture.Name, bundleHex);
+		}
+
+		private static string BundleIndexToHex(int bundleIndex)
+		{
+			return bundleIndex.ToString("x2");
+		}
+
+		private static string GetBundleHex(string hash)
+		{
+			return hash.Substring(0, 2);
 		}
 
 		public LocalizedObjectList GetCachedListForHash(CultureInfo culture, string hash)
 		{
 			if (_initialBundlesCount <= 0)
 				return null;
-			return LocalizationCache.Get<LocalizedObjectList>(GetBundleName(culture, GetBundleIndex(hash)));
+			return LocalizationCache.Get<LocalizedObjectList>(GetBundleName(culture, GetBundleHex(hash)));
 		}
 
 		public IEnumerable<CultureInfo> GetCultures()
@@ -232,16 +217,17 @@ namespace Knoema.Localization
 		public void Delete(CultureInfo culture, params ILocalizedObject[] list)
 		{
 			Repository.Delete(list);
-			RemoveFromCache(culture, list);
+			UpdateInCache(culture, list);
 		}
 
-		private void RemoveFromCache(CultureInfo culture, ILocalizedObject[] list)
+		private void UpdateInCache(CultureInfo culture, ILocalizedObject[] list)
 		{
-			var bundlesToDelete = new HashSet<string>();
+			var bundlesToUpdate = new HashSet<string>();
 			foreach (var obj in list)
-				bundlesToDelete.Add(GetBundleName(culture, GetBundleIndex(obj.Hash)));
-			foreach (var bundleName in bundlesToDelete)
-				LocalizationCache.Remove(bundleName);
+				bundlesToUpdate.Add(GetBundleHex(obj.Hash));
+			var allObjects = Repository.GetAll(culture);
+			foreach (var bundle in bundlesToUpdate)
+				UpdateSingleBundle(culture, bundle, allObjects);
 		}
 
 		public void ClearDB(CultureInfo culture = null)
@@ -268,13 +254,13 @@ namespace Knoema.Localization
 				obj.Disable();
 
 			Repository.Save(list);
-			RemoveFromCache(culture, list);
+			UpdateInCache(culture, list);
 		}
 
 		public void Save(CultureInfo culture, params ILocalizedObject[] list)
 		{
 			Repository.Save(list);
-			RemoveFromCache(culture, list);
+			UpdateInCache(culture, list);
 		}
 
 		public void Import(params ILocalizedObject[] list)
