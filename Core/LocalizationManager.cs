@@ -161,12 +161,12 @@ namespace Knoema.Localization
 			var bundles = new LocalizedObjectList[_initialBundlesCount];
 			for (int i = 0; i < _initialBundlesCount; i++)
 			{
-				bundles[i] = LocalizationCache.Get<LocalizedObjectList>(GetBundleName(culture, BundleIndexToHashStart(i)));
+				bundles[i] = LocalizationCache.Get<LocalizedObjectList>(GetBundleName(culture, BundleIndexToHex(i)));
 				if (bundles[i] == null)
 				{
 					if (allObjects == null)
 						allObjects = Repository.GetAll(culture);
-					bundles[i] = UpdateSingleBundle(culture, BundleIndexToHashStart(i), allObjects);
+					bundles[i] = UpdateSingleBundle(culture, BundleIndexToHex(i), allObjects);
 				}
 			}
 
@@ -176,28 +176,28 @@ namespace Knoema.Localization
 			return lstCombined.ToEnumerable();
 		}
 
-		private LocalizedObjectList UpdateSingleBundle(CultureInfo culture, string bundleHashStart, IEnumerable<ILocalizedObject> allObjects)
+		private LocalizedObjectList UpdateSingleBundle(CultureInfo culture, string bundleHex, IEnumerable<ILocalizedObject> allObjects)
 		{
-			var bundleObjects = allObjects.Where(x => x.Hash.ToLowerInvariant().Substring(0, 2) == bundleHashStart);
+			var bundleObjects = allObjects.Where(x => x.Hash.ToLowerInvariant().Substring(0, 2) == bundleHex);
 			//only objects with correct Hash are loaded
 			var newBundle = new LocalizedObjectList();
 			foreach (var obj in bundleObjects)
 				newBundle.Add(obj);
-			LocalizationCache.Insert(GetBundleName(culture, bundleHashStart), newBundle);
+			LocalizationCache.Insert(GetBundleName(culture, bundleHex), newBundle);
 			return newBundle;
 		}
 
-		private static string GetBundleName(CultureInfo culture, string bundleHashStart)
+		private static string GetBundleName(CultureInfo culture, string bundleHex)
 		{
-			return string.Format("{0}_bundle{1}", culture.Name, bundleHashStart);
+			return string.Format("{0}_bundle{1}", culture.Name, bundleHex);
 		}
 
-		private static string BundleIndexToHashStart(int bundleIndex)
+		private static string BundleIndexToHex(int bundleIndex)
 		{
 			return bundleIndex.ToString("x2");
 		}
 
-		private static string GetBundleHashStart(string hash)
+		private static string GetBundleHex(string hash)
 		{
 			return hash.Substring(0, 2);
 		}
@@ -206,7 +206,7 @@ namespace Knoema.Localization
 		{
 			if (_initialBundlesCount <= 0)
 				return null;
-			return LocalizationCache.Get<LocalizedObjectList>(GetBundleName(culture, GetBundleHashStart(hash)));
+			return LocalizationCache.Get<LocalizedObjectList>(GetBundleName(culture, GetBundleHex(hash)));
 		}
 
 		public IEnumerable<CultureInfo> GetCultures()
@@ -224,7 +224,7 @@ namespace Knoema.Localization
 		{
 			var bundlesToUpdate = new HashSet<string>();
 			foreach (var obj in list)
-				bundlesToUpdate.Add(GetBundleHashStart(obj.Hash));
+				bundlesToUpdate.Add(GetBundleHex(obj.Hash));
 			var allObjects = Repository.GetAll(culture);
 			foreach (var bundle in bundlesToUpdate)
 				UpdateSingleBundle(culture, bundle, allObjects);
