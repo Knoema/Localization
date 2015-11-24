@@ -77,7 +77,7 @@ namespace Knoema.Localization.Web
 
 		private string Api(HttpContext context, string endpoint, NameValueCollection query)
 		{
-			var serializer = new JavaScriptSerializer() { MaxJsonLength = 4194304 };
+			var serializer = new JavaScriptSerializer() { MaxJsonLength = 16777216 };
 			var response = string.Empty;
 
 			switch (endpoint)
