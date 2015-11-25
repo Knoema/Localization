@@ -189,7 +189,7 @@ namespace Knoema.Localization
 
 		private static string GetBundleName(CultureInfo culture, string bundleHex)
 		{
-			return string.Format("{0}_bundle{1}", culture.Name, bundleHex);
+			return string.Format("{0}_bundle0x{1}", culture.Name, bundleHex);
 		}
 
 		private static string BundleIndexToHex(int bundleIndex)
