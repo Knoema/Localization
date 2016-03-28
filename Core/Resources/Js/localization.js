@@ -386,8 +386,8 @@ var localization = (function ($) {
 
 			var href = $('a[key="' + id + '"]');
 			var text = $(href.closest('tr').find('td').get(0)).html();
-			var scope = href.attr('scope').length > 50
-				? "..." + href.attr('scope').substring(href.attr('scope').length - 50)
+			var scope = href.attr('scope').length > 60
+				? "..." + href.attr('scope').substring(href.attr('scope').length - 60)
 				: href.attr('scope');
 
 			translation = $(href.closest('tr').find('td').get(1)).html();
