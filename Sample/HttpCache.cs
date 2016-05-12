@@ -1,6 +1,6 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 using System.Web;
 using System.Web.Caching;
 
@@ -11,30 +11,32 @@ namespace Sample
 	public class HttpCache : ILocalizationCache
 	{
 		Cache _cache;
+		ConcurrentDictionary<string, List<Action<string, string>>> _callbacks;
 
 		public HttpCache()
 		{
 			_cache = HttpRuntime.Cache;
+			_callbacks = new ConcurrentDictionary<string, List<Action<string, string>>>(StringComparer.OrdinalIgnoreCase);
 		}
 
 		public object Add(string key, object entry, DateTime utcExpiry, string region = null)
 		{
-			return _cache.Add(key, entry, null, utcExpiry, Cache.NoSlidingExpiration, CacheItemPriority.Default, null);
+			return _cache.Add((region ?? string.Empty) + key, entry, null, utcExpiry, Cache.NoSlidingExpiration, CacheItemPriority.Default, null);
 		}
 
 		public object Get(string key, string region = null)
 		{
-			return _cache.Get(key);
+			return _cache.Get((region ?? string.Empty) + key);
 		}
 
 		public void Remove(string key, string region = null)
 		{
-			_cache.Remove(key);
+			_cache.Remove((region ?? string.Empty) + key);
 		}
 
 		public void Set(string key, object entry, DateTime utcExpiry, string region = null)
 		{
-			_cache.Insert(key, entry, null, utcExpiry, Cache.NoSlidingExpiration, CacheItemPriority.Default, null);
+			_cache.Insert((region ?? string.Empty) + key, entry, null, utcExpiry, Cache.NoSlidingExpiration, CacheItemPriority.Default, null);
 		}
 
 		public void Clear(string region = null)
@@ -42,27 +44,34 @@ namespace Sample
 			var items = _cache.GetEnumerator();
 
 			while (items.MoveNext())
-				_cache.Remove(items.Key.ToString());
+			{
+				if (region == null || items.Key.ToString().StartsWith(region))
+					_cache.Remove(items.Key.ToString());
+			}
 		}
 
 		const string ChannelPrefix = "channel_";
 		public void Subscribe(string channel, Action<string, string> callback)
 		{
 			var channelKey = ChannelPrefix + channel;
-			var callbacks = (List<Action<string, string>>)_cache.Get(channelKey);
+			List<Action<string, string>> callbacks;
+			_callbacks.TryGetValue(channelKey, out callbacks);
 			if (callbacks == null)
-				callbacks = new List<Action<string,string>>();
+				callbacks = new List<Action<string, string>>();
 			callbacks.Add(callback);
-			_cache.Insert(channelKey, callbacks);
+			_callbacks[channelKey] = callbacks;
 		}
 
 		public void Publish(string channel, string message)
 		{
 			var channelKey = ChannelPrefix + channel;
-			var callbacks = (List<Action<string, string>>)_cache.Get(channelKey);
+			List<Action<string, string>> callbacks;
+			_callbacks.TryGetValue(channelKey, out callbacks);
 			if (callbacks == null)
 				return;
-			foreach(var callback in callbacks)
+
+			callbacks = new List<Action<string, string>>(callbacks);
+			foreach (var callback in callbacks)
 				callback(channel, message);
 		}
 	}
