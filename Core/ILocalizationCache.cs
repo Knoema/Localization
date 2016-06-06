@@ -12,7 +12,5 @@ namespace Knoema.Localization
 
 		void Subscribe(string channel, Action<string, string> callback);
 		void Publish(string channel, string message);
-
-		bool SubscribeAndRegionsSupported();
 	}
 }
