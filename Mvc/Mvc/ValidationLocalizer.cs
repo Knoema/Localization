@@ -61,7 +61,9 @@ namespace Knoema.Localization.Mvc
 			if (attribute is RangeAttribute)
 			{
 				var attr = (RangeAttribute)attribute;
-				result = new RangeAttribute((double)attr.Minimum, (double)attr.Maximum);
+				result = (attr.Minimum is double)
+					?  new RangeAttribute((double)attr.Minimum, (double)attr.Maximum)
+					:  new RangeAttribute((int)attr.Minimum, (int)attr.Maximum);
 			}
 
 			if (attribute is RegularExpressionAttribute)
