@@ -45,8 +45,26 @@ var _epls = _epls || [];
 	}
 
 	var localize = function (scope, text, formatterArguments) {
-		if (_epli) 
-			_epls.push(scope.toLowerCase());		
+		
+		if (scope){
+
+			scope = scope.toLowerCase();
+			_eplsDomain = _eplsDomain.toLowerCase();
+
+			if (_epli) {
+			
+				if (!_eplsDomain || scope.indexOf(_eplsDomain) > -1) {
+					
+					var s = scope.replace(_eplsDomain, '');
+
+					if (s.indexOf("/") == 0)
+						s = s.substring(1);
+
+					_epls.push(s);
+				}
+					
+			}
+		}
 
 		var currentCulture = '{currentCulture}';
 		var initialCulture = $('input#initialCulture').val();
@@ -63,7 +81,7 @@ var _epls = _epls || [];
 
 		var t = null;
 		$.each(data, function () {
-			if (this.Text == text && this.Scope == scope) {
+			if (this.Text == text && this.Scope.toLowerCase() == scope) {
 				t = this;
 				return;
 			};

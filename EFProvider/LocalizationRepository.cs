@@ -29,10 +29,7 @@ namespace Knoema.Localization.EFProvider
 
 		IEnumerable<System.Globalization.CultureInfo> ILocalizationRepository.GetCultures()
 		{
-			return Objects.Select(x => x.LocaleId)
-					.ToList()
-					.Distinct()
-					.Select(x => new CultureInfo(x));
+			return Objects.Select(x => x.LocaleId).ToList().Distinct().Select(x => new CultureInfo(x)).ToList();
 		}
 
 		ILocalizedObject ILocalizationRepository.Create()
@@ -47,7 +44,7 @@ namespace Knoema.Localization.EFProvider
 
 		IEnumerable<ILocalizedObject> ILocalizationRepository.GetAll(CultureInfo culture)
 		{
-			return Objects.Where(obj => obj.LocaleId == culture.LCID);
+			return Objects.Where(obj => obj.LocaleId == culture.LCID).ToList();
 		}
 
 		void ILocalizationRepository.Save(params ILocalizedObject[] list)

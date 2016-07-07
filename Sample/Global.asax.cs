@@ -7,6 +7,7 @@ using System.Web;
 using System.Web.Mvc;
 using System.Web.Routing;
 using Knoema.Localization.Mvc;
+using Knoema.Localization;
 
 namespace Sample
 {
@@ -44,9 +45,16 @@ namespace Sample
 			RegisterRoutes(RouteTable.Routes);
 			
 			// initialize repository
-			Knoema.Localization.LocalizationManager.Repository = new Knoema.Localization.EFProvider.LocalizationRepository();
+			LocalizationManager.Repository = new Knoema.Localization.EFProvider.LocalizationRepository();
+
+			// uncomment this to show strings only for specific scope
+			//LocalizationManager.Instance.SetDomain("~/Views");
+			
+			// uncomment this to show strings only for cultures
+			//LocalizationManager.Instance.SetCultures(new List<string>() { "ru-ru" });
+			
 			// initialize cache provider
-			Knoema.Localization.LocalizationCache.Initialize(new HttpCache());
+			LocalizationCache.Initialize(new HttpCache());
 
 			// configure localization of models
 			ModelValidatorProviders.Providers.Clear();

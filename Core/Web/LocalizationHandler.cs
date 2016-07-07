@@ -26,7 +26,8 @@ namespace Knoema.Localization.Web
 			if (admin)
 			{
 				include += GetResource(GetResourcePath("include-admin.html"));
-				include = include.Replace("{localizationScope}", scope == null ? string.Empty : "'" + string.Join("','", scope) + "'");
+				include = include.Replace("{domain}", _manager.GetDomain());
+				include = include.Replace("{scope}", scope == null || scope.Count == 0 ? null : "'" + string.Join("','", scope) + "'");
 			}
 
 			var names = typeof(LocalizationHandler).Assembly.GetManifestResourceNames();
@@ -79,22 +80,17 @@ namespace Knoema.Localization.Web
 		{
 			var serializer = new JavaScriptSerializer() { MaxJsonLength = 16777216 };
 			var response = string.Empty;
-
+			
 			switch (endpoint)
 			{
 				case "cultures":
-					response = serializer.Serialize(
-						_manager.GetCultures().Where(x => x.LCID != DefaultCulture.Value.LCID).Select(x => x.Name));
+					response = serializer.Serialize(_manager.GetCultures().Where(x => x.LCID != DefaultCulture.Value.LCID).Select(x => x.Name));
 					break;
 
 				case "tree":
-					var resources = _manager.GetAll(
-						string.IsNullOrEmpty(query["culture"])
-							? DefaultCulture.Value
-							: new CultureInfo(query["culture"])
-						);
-					response = serializer.Serialize(
-						GetTree(resources).Where(x => x.IsRoot));
+					response = serializer.Serialize(GetTree(
+						_manager.GetAll(string.IsNullOrEmpty(query["culture"]) ? DefaultCulture.Value : new CultureInfo(query["culture"]))
+					));
 					break;
 
 				case "table":
@@ -155,21 +151,23 @@ namespace Knoema.Localization.Web
 
 				case "export":
 
-					var filepath = Path.GetTempFileName();
 					var res = new List<ILocalizedObject>();
-
 					var objects = _manager.GetAll(new CultureInfo(query["culture"]));
 					var scope = query["scope"];
+					var domain = _manager.GetDomain();
 
 					if (!string.IsNullOrEmpty(scope))
 					{
-						var scopes = scope.Split(',').Select(s => s.Trim());
+						var scopes = scope.Split(',').Select(s => s.Trim()).ToList();
+
+						if (!string.IsNullOrEmpty(domain))
+							scopes = scopes.Where(s => s.StartsWith(domain, StringComparison.OrdinalIgnoreCase)).ToList();
 
 						foreach (var s in scopes)
-							res.AddRange(objects.Where(obj => obj.Scope.ToLowerInvariant().Contains(s.ToLowerInvariant())));
+							res.AddRange(objects.Where(obj => obj.Scope.StartsWith(s, StringComparison.OrdinalIgnoreCase)));
 					}
 					else
-						res.AddRange(objects);
+						res.AddRange(string.IsNullOrEmpty(domain) ? objects : objects.Where(obj => obj.Scope.StartsWith(domain, StringComparison.OrdinalIgnoreCase)));
 
 					var data = res.Select(x =>
 						new
@@ -180,6 +178,8 @@ namespace Knoema.Localization.Web
 							Text = x.Text,
 							Translation = x.Translation
 						});
+
+					var filepath = Path.GetTempFileName();
 
 					File.WriteAllText(filepath, serializer.Serialize(data));
 
@@ -508,68 +508,23 @@ namespace Knoema.Localization.Web
 			return stringBuilder.ToString();
 		}
 
-		private List<TreeNode> GetTree(IEnumerable<ILocalizedObject> lst)
+		private ScopeEntryCollection GetTree(IEnumerable<ILocalizedObject> lst)
 		{
-			var tree = new List<TreeNode>();
+			var domain = _manager.GetDomain();
 
-			foreach (var obj in lst)
-			{
-				if (obj.Scope == null)
-					continue;
+			if (string.IsNullOrEmpty(domain))
+				domain = "~/";
 
-				var labels = obj.Scope.Split('/');
+			lst = lst.Where(x => x.Scope.StartsWith(domain, StringComparison.OrdinalIgnoreCase));
+			
+			var result = new ScopeEntryCollection();
+			var scope = lst.Select(x => x.Scope).Distinct().OrderBy(x => x).ToList();
+			var scopeWithoutTranslation = lst.Where(x => x.Translation == null).Select(x => x.Scope).Distinct().ToList();
 
-				for (int i = 0; i < labels.Length; i++)
-				{
-					var path = string.Empty;
-					for (int j = 0; j <= i; j++)
-						path += labels[j] + "/";
-
-					path = path.Remove(path.LastIndexOf("/"));
-
-					var node = tree.FirstOrDefault(x => x.Scope.ToLowerInvariant() == path.ToLowerInvariant());
-					if (node == null)
-					{
-						node = new TreeNode(labels[i], path, i == 0, true);
-						tree.Add(node);
-					}
-
-					if (i == labels.Length - 1)
-						node.Translated = !string.IsNullOrEmpty(obj.Translation) && node.Translated;
-
-					if (i > 0)
-					{
-						var parent = tree.FirstOrDefault(x => x.Scope.ToLowerInvariant() == path.Remove(path.LastIndexOf("/")).ToLowerInvariant());
-						if (!parent.Children.Contains(node))
-							parent.Children.Add(node);
-					}
-				}
-			}
-
-			return tree;
-		}
-	}
-
-	public class TreeNode
-	{
-		public string Label { get; set; }
-		public string Scope { get; set; }
-		public bool IsRoot { get; set; }
-		public bool Translated { get; set; }
-		public List<TreeNode> Children { get; set; }
-
-		public TreeNode(string label, string scope, bool isRoot, bool translated)
-		{
-			Label = label;
-			Scope = scope;
-			IsRoot = isRoot;
-			Translated = translated;
-			Children = new List<TreeNode>();
-		}
-
-		public override string ToString()
-		{
-			return Scope;
+			foreach (var item in scope)
+				result.AddEntry(item, domain, scopeWithoutTranslation.Contains(item));
+			
+			return result;
 		}
 	}
 }

@@ -91,6 +91,12 @@ var localization = (function ($) {
 				container.append(result);
 				container.find('div#create-lang input[type="button"]').click(createLanguage);
 
+				if (_eplsDomain) {
+					container.find('#create-lang').remove();
+					container.find('#bulk-import').remove();
+					container.find('#clear-db').remove();
+				}
+
 				$.getJSON('{appPath}/_localization/api/cultures', function (result) {
 
 					$.each(result, function () {
@@ -190,15 +196,14 @@ var localization = (function ($) {
 								slist.push(this);
 						});
 
-						var scope = { Children: [], IsRoot: true, Label: 'Current page', Scope: '', Translated: false };
+						var scope = { Children: [], Name: 'Current page', Scope: '', Translated: false };
 
 						$.each(slist, function () {
 							scope.Children.push({
 								Children: [],
-								IsRoot: false,
-								Label: this,
+								Name: this,
 								Scope: this,
-								Translated: isTranslated(this, result[0].Children)
+								NotTranslated: notTranslated(this, result)
 							});
 						});
 
@@ -222,16 +227,17 @@ var localization = (function ($) {
 				})
 			);
 
-			var isTranslated = function (scope, tree) {
+			var notTranslated = function (scope, tree) {
 				
-				for (var i = 0; i < tree.length; i++ ){
+				for (var key in tree){
 
-					if (tree[i].Scope.toLowerCase() == scope)
-						return tree[i].Translated;
+					if (tree[key].Scope.toLowerCase() == scope)
+						return tree[key].NotTranslated;
 
-					if (tree[i].Children.length > 0) {
+					var children = Object.keys(tree[key].Children).length;
+					if (children) {
 
-						var res = isTranslated(scope, tree[i].Children);
+						var res = notTranslated(scope, tree[key].Children);
 
 						if (res != null)
 							return res;
@@ -248,9 +254,10 @@ var localization = (function ($) {
 				$.each(treeNode, function () {
 
 					var li = $(buildHtml('li')).appendTo(ul);
+					var children = Object.keys(this.Children).length;
 
-					$(buildHtml('span', { 'class': this.Children.length > 0 ? 'folder' : 'file' })).appendTo(li);
-					$(buildHtml('span', this.Label, { 'class': 'label' + (!this.Translated || this.Children.length > 0 ? ' untranslated' : ''), 'scope': this.Scope })).appendTo(li);
+					$(buildHtml('span', { 'class': children > 0 ? 'folder' : 'file' })).appendTo(li);
+					$(buildHtml('span', this.Name, { 'class': 'label' + (this.NotTranslated ? ' not-translated' : ''), 'scope': this.Scope })).appendTo(li);
 
 					parseTree(this.Children, li);
 				});

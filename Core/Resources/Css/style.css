@@ -200,9 +200,10 @@ div#localization div.popup div#resources ul.tree span.label
 	color: gray;
 }
 
-div#localization div.popup div#resources ul.tree span.label.untranslated
+div#localization div.popup div#resources ul.tree span.label.not-translated
 {
 	color: black;
+	font-weight: bold;
 }
 
 div#localization div.popup div#resources ul.tree span.label.selected
@@ -401,4 +402,9 @@ div#localization div.popup div#import textarea
 	width: 250px;
 	height: 50px;
 	margin-top: 5px;
+}
+
+div#localization div.popup div#import div
+{
+	margin-top: 10px;
 }

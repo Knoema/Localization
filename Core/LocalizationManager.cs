@@ -29,6 +29,9 @@ namespace Knoema.Localization
 			}
 		}
 
+		private string _domain;
+		private IEnumerable<string> _cultures;
+
 		private LocalizationManager() { }
 
 		public string Translate(string scope, string text, bool readOnly = false, CultureInfo culture = null)
@@ -159,31 +162,40 @@ namespace Knoema.Localization
 		{
 			IEnumerable<ILocalizedObject> allObjects = null;
 			var bundles = new LocalizedObjectList[_initialBundlesCount];
+			
 			for (int i = 0; i < _initialBundlesCount; i++)
 			{
 				bundles[i] = LocalizationCache.Get<LocalizedObjectList>(GetBundleName(culture, BundleIndexToHex(i)));
+				
 				if (bundles[i] == null)
 				{
 					if (allObjects == null)
 						allObjects = Repository.GetAll(culture);
+
 					bundles[i] = UpdateSingleBundle(culture, BundleIndexToHex(i), allObjects);
 				}
 			}
 
-			var lstCombined = new LocalizedObjectList();
+			var result = new LocalizedObjectList();
+
 			foreach (var bundle in bundles)
-				lstCombined.AddRange(bundle);
-			return lstCombined.ToEnumerable();
+				result.AddRange(bundle);
+
+			return result.ToEnumerable();
 		}
 
 		private LocalizedObjectList UpdateSingleBundle(CultureInfo culture, string bundleHex, IEnumerable<ILocalizedObject> allObjects)
 		{
 			var bundleObjects = allObjects.Where(x => x.Hash.ToLowerInvariant().Substring(0, 2) == bundleHex);
+			
 			//only objects with correct Hash are loaded
 			var newBundle = new LocalizedObjectList();
+		
 			foreach (var obj in bundleObjects)
 				newBundle.Add(obj);
+
 			LocalizationCache.Insert(GetBundleName(culture, bundleHex), newBundle);
+
 			return newBundle;
 		}
 
@@ -206,12 +218,23 @@ namespace Knoema.Localization
 		{
 			if (_initialBundlesCount <= 0)
 				return null;
+
 			return LocalizationCache.Get<LocalizedObjectList>(GetBundleName(culture, GetBundleHex(hash)));
+		}
+
+		public void SetCultures(IEnumerable<string> cultures)
+		{
+			_cultures = cultures;
 		}
 
 		public IEnumerable<CultureInfo> GetCultures()
 		{
-			return Repository.GetCultures().ToList();
+			var result = Repository.GetCultures().ToList();
+
+			if (_cultures != null)
+				result = result.Where(c => _cultures.Contains(c.Name, StringComparer.OrdinalIgnoreCase)).ToList();
+
+			return result;
 		}
 
 		public void Delete(CultureInfo culture, params ILocalizedObject[] list)
@@ -223,9 +246,12 @@ namespace Knoema.Localization
 		private void UpdateInCache(CultureInfo culture, ILocalizedObject[] list)
 		{
 			var bundlesToUpdate = new HashSet<string>();
+			
 			foreach (var obj in list)
 				bundlesToUpdate.Add(GetBundleHex(obj.Hash));
+			
 			var allObjects = Repository.GetAll(culture);
+			
 			foreach (var bundle in bundlesToUpdate)
 				UpdateSingleBundle(culture, bundle, allObjects);
 		}
@@ -265,19 +291,26 @@ namespace Knoema.Localization
 
 		public void Import(params ILocalizedObject[] list)
 		{
-			Dictionary<int, List<ILocalizedObject>> import = new Dictionary<int, List<ILocalizedObject>>();
+			var import = new Dictionary<int, List<ILocalizedObject>>();
+			
 			foreach (var obj in list)
 			{
+				if (!string.IsNullOrEmpty(_domain) && !obj.Scope.StartsWith(_domain))
+					continue;
+
 				if (obj.Hash == null)
 					obj.Hash = GetHash(obj.Scope.ToLowerInvariant() + obj.Text);
+				
 				var stored = GetLocalizedObject(new CultureInfo(obj.LocaleId), obj.Hash);
 				if (stored != null)
 				{
 					if (!string.IsNullOrEmpty(obj.Translation))
 					{
 						stored.Translation = obj.Translation;
+						
 						if (!import.ContainsKey(obj.LocaleId))
 							import.Add(obj.LocaleId, new List<ILocalizedObject>());
+						
 						import[obj.LocaleId].Add(stored);
 					}
 				}
@@ -288,6 +321,7 @@ namespace Knoema.Localization
 
 					if (!import.ContainsKey(obj.LocaleId))
 						import.Add(obj.LocaleId, new List<ILocalizedObject>());
+					
 					import[obj.LocaleId].Add(imported);
 				}
 
@@ -297,6 +331,7 @@ namespace Knoema.Localization
 				{
 					if (!import.ContainsKey(obj.LocaleId))
 						import.Add(obj.LocaleId, new List<ILocalizedObject>());
+					
 					import[obj.LocaleId].Add(Create(obj.Hash, DefaultCulture.Value.LCID, obj.Scope, obj.Text));
 				}
 			}
@@ -391,7 +426,7 @@ namespace Knoema.Localization
 		{
 			if (HttpContext.Current == null)
 				return;
-
+		
 			var scope = HttpContext.Current.Items["localizationScope"] as List<string> ?? new List<string>();
 
 			if (!scope.Contains(path))
@@ -405,16 +440,32 @@ namespace Knoema.Localization
 			if (HttpContext.Current == null)
 				return null;
 
-			return HttpContext.Current.Items["localizationScope"] as List<string>;
+			var result = HttpContext.Current.Items["localizationScope"] as List<string>;
+		
+			if (!string.IsNullOrEmpty(_domain))
+				result = result.Where(x => x.StartsWith(_domain, StringComparison.OrdinalIgnoreCase)).Select(x => x.ToLower().Replace(_domain.ToLower(), string.Empty)).ToList();
+
+			return result.Select(x => x.StartsWith("/") ? x.Substring(1) : x).ToList();
+		}
+
+		public void SetDomain(string domain)
+		{
+			_domain = domain;
+		}
+
+		public string GetDomain()
+		{
+			return _domain;
 		}
 
 		private ILocalizedObject GetLocalizedObject(CultureInfo culture, string hash)
 		{
 			var lst = GetCachedListForHash(culture, hash);
+
 			if (lst == null || !lst.Any())
 				return GetAll(culture).FirstOrDefault(x => x.Hash == hash);
-			else
-				return lst.FindItemByHash(hash);
+			
+			return lst.FindItemByHash(hash);
 		}
 
 		private string GetHash(string text)
@@ -426,6 +477,6 @@ namespace Knoema.Localization
 				stringBuilder.Append(hash[i].ToString("x2"));
 
 			return stringBuilder.ToString();
-		}
+		}		
 	}
 }
