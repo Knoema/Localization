@@ -84,7 +84,15 @@ namespace Knoema.Localization.Web
 			switch (endpoint)
 			{
 				case "cultures":
-					response = serializer.Serialize(_manager.GetCultures().Where(x => x.LCID != DefaultCulture.Value.LCID).Select(x => x.Name));
+					
+					var supported =  _manager.GetSupportedCultures();
+					var cultures = _manager.GetCultures();
+
+					if (supported != null && supported.Any())
+						cultures = cultures.Where(c => supported.Contains(c.Name, StringComparer.OrdinalIgnoreCase)).ToList();
+
+					response = serializer.Serialize(cultures.Where(x => x.LCID != DefaultCulture.Value.LCID).Select(x => x.Name));
+					
 					break;
 
 				case "tree":

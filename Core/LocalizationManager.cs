@@ -222,19 +222,19 @@ namespace Knoema.Localization
 			return LocalizationCache.Get<LocalizedObjectList>(GetBundleName(culture, GetBundleHex(hash)));
 		}
 
-		public void SetCultures(IEnumerable<string> cultures)
+		public void SetSupportedCultures(IEnumerable<string> cultures)
 		{
 			_cultures = cultures;
 		}
 
+		public IEnumerable<string> GetSupportedCultures()
+		{
+			return _cultures;
+		}
+
 		public IEnumerable<CultureInfo> GetCultures()
 		{
-			var result = Repository.GetCultures().ToList();
-
-			if (_cultures != null)
-				result = result.Where(c => _cultures.Contains(c.Name, StringComparer.OrdinalIgnoreCase)).ToList();
-
-			return result;
+			return Repository.GetCultures().ToList();
 		}
 
 		public void Delete(CultureInfo culture, params ILocalizedObject[] list)
