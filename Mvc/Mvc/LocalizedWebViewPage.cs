@@ -123,7 +123,7 @@ namespace Knoema.Localization.Mvc
 			if (culture.IsDefault())
 				return text;
 
-			if (LocalizationManager.Repository == null)
+			if (LocalizationManager.Provider == null)
 				return text;
 
 			var translation = LocalizationManager.Instance.Translate(virtualPath, text, culture: culture);

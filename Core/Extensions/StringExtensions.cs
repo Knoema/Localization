@@ -17,7 +17,7 @@ namespace Knoema.Localization
 			if (CultureInfo.CurrentCulture.IsDefault())
 				return value;
 
-			if (LocalizationManager.Repository == null)
+			if (LocalizationManager.Provider == null)
 				return value;
 
 			var translation = LocalizationManager.Instance.Translate(scope, value);

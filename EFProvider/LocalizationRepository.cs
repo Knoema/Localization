@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Data.Entity;
 using System.Data.Entity.Migrations;
 using System.Globalization;
@@ -8,62 +9,67 @@ using System.Text;
 
 namespace Knoema.Localization.EFProvider
 {
-	public class LocalizationRepository: DbContext, ILocalizationRepository
+	public class LocalizationRepository : ILocalizationRepository
 	{
-
-		public LocalizationRepository()
+		public IEnumerable<CultureInfo> GetCultures()
 		{
+			using (var context = new LocalizationContext())
+			{
+				return context.Objects.Select(x => x.LocaleId).ToList().Distinct().Select(x => new CultureInfo(x)).ToList();
+			}
 		}
 
-		public LocalizationRepository(string nameOrConnectionString) :
-			base(nameOrConnectionString)
-		{
-		}
-
-		public LocalizationRepository(System.Data.Common.DbConnection existingConnection, bool contextOwnsConnection) :
-			base(existingConnection, contextOwnsConnection)
-		{
-		}
-
-		public IDbSet<LocalizedObject> Objects { get; set; }
-
-		IEnumerable<System.Globalization.CultureInfo> ILocalizationRepository.GetCultures()
-		{
-			return Objects.Select(x => x.LocaleId).ToList().Distinct().Select(x => new CultureInfo(x)).ToList();
-		}
-
-		ILocalizedObject ILocalizationRepository.Create()
+		public ILocalizedObject Create()
 		{
 			return new LocalizedObject();
 		}
 
-		ILocalizedObject ILocalizationRepository.Get(int key)
+		public ILocalizedObject Get(int key)
 		{
-			return Objects.Where(obj => obj.Key == key).FirstOrDefault();
+			using (var context = new LocalizationContext())
+			{
+				return context.Objects.Where(obj => obj.Key == key).FirstOrDefault();
+			}
 		}
 
-		IEnumerable<ILocalizedObject> ILocalizationRepository.GetAll(CultureInfo culture)
+		public IEnumerable<ILocalizedObject> GetAll(CultureInfo culture)
 		{
-			return Objects.Where(obj => obj.LocaleId == culture.LCID).ToList();
+			using (var context = new LocalizationContext())
+			{
+				return context.Objects.Where(obj => obj.LocaleId == culture.LCID).ToList();
+			}
 		}
 
-		void ILocalizationRepository.Save(params ILocalizedObject[] list)
+		public void Save(params ILocalizedObject[] list)
 		{
-			Objects.AddOrUpdate(list.Cast<Knoema.Localization.EFProvider.LocalizedObject>().ToArray());
-			SaveChanges();
+			using (var context = new LocalizationContext())
+			{
+				context.Objects.AddOrUpdate(list.Cast<LocalizedObject>().ToArray());
+				context.SaveChanges();
+			}
 		}
 
-		void ILocalizationRepository.Delete(params ILocalizedObject[] list)
+		public void Delete(params ILocalizedObject[] list)
 		{
-			foreach (var obj in list)
-				Objects.Remove(obj as Knoema.Localization.EFProvider.LocalizedObject);
-
-			SaveChanges();
+			using (var context = new LocalizationContext())
+			{
+				foreach (var obj in list)
+				{
+					var stored = context.Objects.Where(x => x.Key == obj.Key).FirstOrDefault();
+					if (stored != null)
+						context.Objects.Remove(stored as LocalizedObject);
+				}
+					
+				context.SaveChanges();
+			}
 		}
 
 		public int GetCount(CultureInfo culture)
 		{
-			return Objects.Where(obj => obj.LocaleId == culture.LCID).Count();
+			using (var context = new LocalizationContext())
+			{
+				return context.Objects.Where(obj => obj.LocaleId == culture.LCID).Count();
+			}
 		}
 	}
 }

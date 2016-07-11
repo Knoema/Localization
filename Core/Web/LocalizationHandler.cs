@@ -26,7 +26,7 @@ namespace Knoema.Localization.Web
 			if (admin)
 			{
 				include += GetResource(GetResourcePath("include-admin.html"));
-				include = include.Replace("{domain}", _manager.GetDomain());
+				include = include.Replace("{domain}", string.Empty);// _manager.GetDomain());
 				include = include.Replace("{scope}", scope == null || scope.Count == 0 ? null : "'" + string.Join("','", scope) + "'");
 			}
 
@@ -80,33 +80,22 @@ namespace Knoema.Localization.Web
 		{
 			var serializer = new JavaScriptSerializer() { MaxJsonLength = 16777216 };
 			var response = string.Empty;
-			
+
 			switch (endpoint)
 			{
 				case "cultures":
-					
-					var supported =  _manager.GetSupportedCultures();
-					var cultures = _manager.GetCultures();
-
-					if (supported != null && supported.Any())
-						cultures = cultures.Where(c => supported.Contains(c.Name, StringComparer.OrdinalIgnoreCase)).ToList();
-
-					response = serializer.Serialize(cultures.Where(x => x.LCID != DefaultCulture.Value.LCID).Select(x => x.Name));
-					
+					response = serializer.Serialize(_manager.GetVisibleCultures().Where(x => x.LCID != DefaultCulture.Value.LCID).Select(x => x.Name));
 					break;
 
 				case "tree":
 					response = serializer.Serialize(GetTree(
-						_manager.GetAll(string.IsNullOrEmpty(query["culture"]) ? DefaultCulture.Value : new CultureInfo(query["culture"]))
+						_manager.GetVisibleLocalizedObjects(string.IsNullOrEmpty(query["culture"]) ? DefaultCulture.Value : new CultureInfo(query["culture"]))
 					));
 					break;
 
 				case "table":
-					response = serializer
-						.Serialize(
-							_manager.GetAll(new CultureInfo(query["culture"]))
-									.Where(x => (x.Scope != null) && x.Scope.StartsWith(query["scope"], StringComparison.InvariantCultureIgnoreCase)));
-
+					response = serializer.Serialize(_manager.GetVisibleLocalizedObjects(new CultureInfo(query["culture"]))
+						.Where(x => x.Scope != null && x.Scope.StartsWith(query["scope"], StringComparison.InvariantCultureIgnoreCase)));
 					break;
 
 				case "edit":
@@ -160,22 +149,18 @@ namespace Knoema.Localization.Web
 				case "export":
 
 					var res = new List<ILocalizedObject>();
-					var objects = _manager.GetAll(new CultureInfo(query["culture"]));
+					var objects = _manager.GetVisibleLocalizedObjects(new CultureInfo(query["culture"]));
 					var scope = query["scope"];
-					var domain = _manager.GetDomain();
 
 					if (!string.IsNullOrEmpty(scope))
 					{
-						var scopes = scope.Split(',').Select(s => s.Trim()).ToList();
-
-						if (!string.IsNullOrEmpty(domain))
-							scopes = scopes.Where(s => s.StartsWith(domain, StringComparison.OrdinalIgnoreCase)).ToList();
+						var scopes = scope.Split(',').Select(s => s.Trim());
 
 						foreach (var s in scopes)
-							res.AddRange(objects.Where(obj => obj.Scope.StartsWith(s, StringComparison.OrdinalIgnoreCase)));
+							res.AddRange(objects.Where(obj => obj.Scope.ToLowerInvariant().Contains(s.ToLowerInvariant())));
 					}
 					else
-						res.AddRange(string.IsNullOrEmpty(domain) ? objects : objects.Where(obj => obj.Scope.StartsWith(domain, StringComparison.OrdinalIgnoreCase)));
+						res.AddRange(objects);
 
 					var data = res.Select(x =>
 						new
@@ -254,6 +239,7 @@ namespace Knoema.Localization.Web
 					{
 						if (string.IsNullOrEmpty(query["scope"]) || string.IsNullOrEmpty(query["text"]))
 							BadRequest(context);
+
 						else if (!LocalizationManager.Instance.GetCulture().IsDefault())
 						{
 							_manager.Translate(query["scope"], query["text"]);
@@ -270,23 +256,17 @@ namespace Knoema.Localization.Web
 				case "hint":
 					try
 					{
-						response = serializer.Serialize(
-							_manager.GetLocalizedObjects(
-								new CultureInfo(query["culture"]), query["text"])
-								.Where(x => !string.IsNullOrEmpty(x.Translation))
-								.Select(x => x.Translation)
-								.Distinct()
-						);
+						response = serializer.Serialize(_manager.GetLocalizedObjects(new CultureInfo(query["culture"]), query["text"])
+							.Where(x => !string.IsNullOrEmpty(x.Translation))
+							.Select(x => x.Translation)
+							.Distinct());
 					}
 					catch (CultureNotFoundException) { }
 					break;
 				case "search":
 					try
 					{
-						response = serializer.Serialize(
-							_manager.GetLocalizedObjects(
-								new CultureInfo(query["culture"]), query["text"], false)
-						);
+						response = serializer.Serialize(_manager.GetLocalizedObjects(new CultureInfo(query["culture"]), query["text"], false));
 					}
 					catch (CultureNotFoundException) { }
 					break;
@@ -297,7 +277,7 @@ namespace Knoema.Localization.Web
 
 		static bool IgnoreLocalization()
 		{
-			if (LocalizationManager.Repository == null)
+			if (LocalizationManager.Provider == null)
 				return true;
 
 			var current = LocalizationManager.Instance.GetCulture();
@@ -418,7 +398,7 @@ namespace Knoema.Localization.Web
 			{
 				case ".js":
 					var content = "1.51" +
-					 (path.EndsWith("jquery-localize.js") && LocalizationManager.Repository != null
+					 (path.EndsWith("jquery-localize.js") && LocalizationManager.Provider != null
 						? GetJsFile(path)
 						: GetStreamHash(GetResourceStream(path)));
 
@@ -518,20 +498,13 @@ namespace Knoema.Localization.Web
 
 		private ScopeEntryCollection GetTree(IEnumerable<ILocalizedObject> lst)
 		{
-			var domain = _manager.GetDomain();
-
-			if (string.IsNullOrEmpty(domain))
-				domain = "~/";
-
-			lst = lst.Where(x => x.Scope.StartsWith(domain, StringComparison.OrdinalIgnoreCase));
-			
 			var result = new ScopeEntryCollection();
 			var scope = lst.Select(x => x.Scope).Distinct().OrderBy(x => x).ToList();
 			var scopeWithoutTranslation = lst.Where(x => x.Translation == null).Select(x => x.Scope).Distinct().ToList();
 
 			foreach (var item in scope)
-				result.AddEntry(item, domain, scopeWithoutTranslation.Contains(item));
-			
+				result.AddEntry(item, scopeWithoutTranslation.Contains(item));
+
 			return result;
 		}
 	}

@@ -14,9 +14,9 @@ namespace Knoema.Localization.Web
 
 		public string Separator { get; set; }
 
-		public void AddEntry(string entry, string domain, bool notTranslated)
+		public void AddEntry(string entry, bool notTranslated)
 		{
-			AddEntry(entry, 0, domain, notTranslated);
+			AddEntry(entry, 0, notTranslated);
 		}
 
 		/// <summary>
@@ -24,13 +24,8 @@ namespace Knoema.Localization.Web
 		/// </summary>
 		/// <param name="entry">The entry.</param>
 		/// <param name="startIndex">The start index.</param>
-		public void AddEntry(string entry, int startIndex, string domain, bool notTranslated)
+		public void AddEntry(string entry, int startIndex, bool notTranslated)
 		{
-			var index  = entry.IndexOf(domain, StringComparison.OrdinalIgnoreCase);
-
-			if (index > -1)
-				entry = entry.Substring(index + domain.Length);
-
 			if (entry.IndexOf(Separator) == 0)
 				entry = entry.Substring(1);
 
@@ -55,7 +50,7 @@ namespace Knoema.Localization.Web
 				item = new ScopeEntry 
 				{
 					Name = key,
-					Scope = domain + entry,
+					Scope = entry,
 					NotTranslated = notTranslated
 				};
 
@@ -63,7 +58,7 @@ namespace Knoema.Localization.Web
 			}
 
 			// Now add the rest to the new item's children
-			item.Children.AddEntry(entry, endIndex + 1, domain, notTranslated);
+			item.Children.AddEntry(entry, endIndex + 1, notTranslated);
 		}
 	}
 }

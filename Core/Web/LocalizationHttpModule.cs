@@ -6,8 +6,8 @@ using System.Linq;
 
 namespace Knoema.Localization.Web
 {
-	public class LocalizationModule: IHttpModule
-	{	
+	public class LocalizationModule : IHttpModule
+	{
 		public void Init(HttpApplication context)
 		{
 			context.BeginRequest += new EventHandler(BeginRequest);
@@ -15,16 +15,16 @@ namespace Knoema.Localization.Web
 
 		private void BeginRequest(Object sender, EventArgs e)
 		{
-			if (LocalizationManager.Repository != null)
+			if (LocalizationManager.Provider != null)
 			{
 				var context = ((HttpApplication)sender).Context;
 				var lang = string.Empty;
 
 				// try to get language from request query, cookie or browser language
 
-				if (context.Request.QueryString["lang"] != null)				
-					lang = context.Request.QueryString["lang"];		
-				
+				if (context.Request.QueryString["lang"] != null)
+					lang = context.Request.QueryString["lang"];
+
 				else if (context.Request.Cookies[LocalizationManager.CookieName] != null)
 					lang = context.Request.Cookies[LocalizationManager.CookieName].Value;
 
@@ -39,13 +39,11 @@ namespace Knoema.Localization.Web
 				{
 					LocalizationManager.Instance.SetCulture(new CultureInfo(lang));
 				}
-				catch (CultureNotFoundException) 
-				{ }
-				catch (ArgumentNullException)
-				{ }
+				catch (CultureNotFoundException) { }
+				catch (ArgumentNullException) { }
 			}
 		}
 
-		public void Dispose() { }		
+		public void Dispose() { }
 	}
 }

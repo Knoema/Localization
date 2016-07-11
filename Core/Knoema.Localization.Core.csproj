@@ -51,12 +51,12 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ILocalizationCache.cs" />
-    <Compile Include="LocalizationCache.cs" />
+    <Compile Include="LocalizationCache\LocalizationCache.cs" />
     <Compile Include="DefaultCulture.cs" />
     <Compile Include="Extensions\StringExtensions.cs" />
     <Compile Include="LocalizationManager.cs" />
-    <Compile Include="LocalizedObjectList.cs" />
+    <Compile Include="LocalizationProvider\ILocalizationProvider.cs" />
+    <Compile Include="LocalizationProvider\LocalizationProvider.cs" />
     <Compile Include="Repository\LocalizedObject.cs" />
     <Compile Include="Repository\LocalizedObjectExtension.cs" />
     <Compile Include="Web\LocalizationHttpModule.cs" />
@@ -107,6 +107,7 @@
   <ItemGroup>
     <EmbeddedResource Include="Resources\Html\include-admin.html" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
