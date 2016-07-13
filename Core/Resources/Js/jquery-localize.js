@@ -46,25 +46,8 @@ var _epls = _epls || [];
 
 	var localize = function (scope, text, formatterArguments) {
 		
-		if (scope){
-
-			scope = scope.toLowerCase();
-			_eplsDomain = _eplsDomain.toLowerCase();
-
-			if (_epli) {
-			
-				if (!_eplsDomain || scope.indexOf(_eplsDomain) > -1) {
-					
-					var s = scope.replace(_eplsDomain, '');
-
-					if (s.indexOf("/") == 0)
-						s = s.substring(1);
-
-					_epls.push(s);
-				}
-					
-			}
-		}
+		if (scope && _epls.indexOf(scope) == -1)
+			_epls.push(scope);
 
 		var currentCulture = '{currentCulture}';
 		var initialCulture = $('input#initialCulture').val();

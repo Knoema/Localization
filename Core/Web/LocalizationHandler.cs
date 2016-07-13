@@ -26,7 +26,7 @@ namespace Knoema.Localization.Web
 			if (admin)
 			{
 				include += GetResource(GetResourcePath("include-admin.html"));
-				include = include.Replace("{domain}", string.Empty);// _manager.GetDomain());
+				include = include.Replace("{root}", _manager.GetRoot());
 				include = include.Replace("{scope}", scope == null || scope.Count == 0 ? null : "'" + string.Join("','", scope) + "'");
 			}
 
@@ -84,17 +84,17 @@ namespace Knoema.Localization.Web
 			switch (endpoint)
 			{
 				case "cultures":
-					response = serializer.Serialize(_manager.GetVisibleCultures().Where(x => x.LCID != DefaultCulture.Value.LCID).Select(x => x.Name));
+					response = serializer.Serialize(_manager.GetCultures().Where(x => x.LCID != DefaultCulture.Value.LCID).Select(x => x.Name));
 					break;
 
 				case "tree":
 					response = serializer.Serialize(GetTree(
-						_manager.GetVisibleLocalizedObjects(string.IsNullOrEmpty(query["culture"]) ? DefaultCulture.Value : new CultureInfo(query["culture"]))
+						_manager.GetAll(string.IsNullOrEmpty(query["culture"]) ? DefaultCulture.Value : new CultureInfo(query["culture"]))
 					));
 					break;
 
 				case "table":
-					response = serializer.Serialize(_manager.GetVisibleLocalizedObjects(new CultureInfo(query["culture"]))
+					response = serializer.Serialize(_manager.GetAll(new CultureInfo(query["culture"]))
 						.Where(x => x.Scope != null && x.Scope.StartsWith(query["scope"], StringComparison.InvariantCultureIgnoreCase)));
 					break;
 
@@ -111,7 +111,7 @@ namespace Knoema.Localization.Web
 							if (edit != null)
 							{
 								edit.Translation = query["translation"];
-								_manager.Save(new CultureInfo(edit.LocaleId), edit);
+								_manager.Save(edit);
 							}
 						}
 					}
@@ -120,7 +120,7 @@ namespace Knoema.Localization.Web
 				case "delete":
 					var delete = _manager.Get(int.Parse(query["id"]));
 					if (delete != null)
-						_manager.Delete(new CultureInfo(delete.LocaleId), delete);
+						_manager.Delete(delete);
 					break;
 
 				case "cleardb":
@@ -131,7 +131,7 @@ namespace Knoema.Localization.Web
 					var disable = _manager.Get(int.Parse(query["id"]));
 					if (disable != null)
 					{
-						_manager.Disable(new CultureInfo(disable.LocaleId), disable);
+						_manager.Disable(disable);
 						response = disable.Translation;
 					}
 					break;
@@ -149,7 +149,7 @@ namespace Knoema.Localization.Web
 				case "export":
 
 					var res = new List<ILocalizedObject>();
-					var objects = _manager.GetVisibleLocalizedObjects(new CultureInfo(query["culture"]));
+					var objects = _manager.GetAll(new CultureInfo(query["culture"]));
 					var scope = query["scope"];
 
 					if (!string.IsNullOrEmpty(scope))
@@ -256,7 +256,7 @@ namespace Knoema.Localization.Web
 				case "hint":
 					try
 					{
-						response = serializer.Serialize(_manager.GetLocalizedObjects(new CultureInfo(query["culture"]), query["text"])
+						response = serializer.Serialize(_manager.GetAll(new CultureInfo(query["culture"]), query["text"])
 							.Where(x => !string.IsNullOrEmpty(x.Translation))
 							.Select(x => x.Translation)
 							.Distinct());
@@ -266,7 +266,7 @@ namespace Knoema.Localization.Web
 				case "search":
 					try
 					{
-						response = serializer.Serialize(_manager.GetVisibleLocalizedObjects(new CultureInfo(query["culture"]), query["text"]));
+						response = serializer.Serialize(_manager.GetAll(new CultureInfo(query["culture"]), query["text"], false));
 					}
 					catch (CultureNotFoundException) { }
 					break;

@@ -91,7 +91,7 @@ var localization = (function ($) {
 				container.append(result);
 				container.find('div#create-lang input[type="button"]').click(createLanguage);
 
-				if (_eplsDomain) {
+				if (_eplsRoot) {
 					container.find('#create-lang').remove();
 					container.find('#bulk-import').remove();
 					container.find('#clear-db').remove();
@@ -191,17 +191,27 @@ var localization = (function ($) {
 					if (_epls.length > 0) {
 
 						var slist = [];
+
 						$.each(_epls, function () {
-							if ($.inArray(this, slist) == -1)
-								slist.push(this);
+
+							var scope = this.toLowerCase();
+
+							if (!_eplsRoot || scope.indexOf(_eplsRoot) > -1)
+								slist.push(scope);
 						});
 
 						var scope = { Children: [], Name: 'Current page', Scope: '', Translated: false };
 
 						$.each(slist, function () {
+
+							var name = _eplsRoot ? this.replace(_eplsRoot, '') : this;
+
+							if (name.indexOf('~/') == -1)
+								name = '~/' + name;
+
 							scope.Children.push({
 								Children: [],
-								Name: this,
+								Name: name,
 								Scope: this,
 								NotTranslated: notTranslated(this, result)
 							});

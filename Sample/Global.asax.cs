@@ -46,7 +46,7 @@ namespace Sample
 			RegisterRoutes(RouteTable.Routes);
 			
 			// initialize localization provider
-			LocalizationManager.Provider = new LocalizationProvider(new LocalizationRepository());
+			LocalizationManager.Provider = new LocalizationProvider();
 		
 			// configure localization of models
 			ModelValidatorProviders.Providers.Clear();

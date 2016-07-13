@@ -51,16 +51,13 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="LocalizationCache\LocalizationCache.cs" />
     <Compile Include="DefaultCulture.cs" />
     <Compile Include="Extensions\StringExtensions.cs" />
     <Compile Include="LocalizationManager.cs" />
-    <Compile Include="LocalizationProvider\ILocalizationProvider.cs" />
-    <Compile Include="LocalizationProvider\LocalizationProvider.cs" />
+    <Compile Include="ILocalizationProvider.cs" />
     <Compile Include="Repository\LocalizedObject.cs" />
     <Compile Include="Repository\LocalizedObjectExtension.cs" />
     <Compile Include="Web\LocalizationHttpModule.cs" />
-    <Compile Include="Repository\ILocalizationRepository.cs" />
     <Compile Include="Repository\ILocalizedObject.cs" />
     <Compile Include="LocalizedAttribute.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
