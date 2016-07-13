@@ -266,7 +266,7 @@ namespace Knoema.Localization.Web
 				case "search":
 					try
 					{
-						response = serializer.Serialize(_manager.GetLocalizedObjects(new CultureInfo(query["culture"]), query["text"], false));
+						response = serializer.Serialize(_manager.GetVisibleLocalizedObjects(new CultureInfo(query["culture"]), query["text"]));
 					}
 					catch (CultureNotFoundException) { }
 					break;

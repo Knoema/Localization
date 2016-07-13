@@ -320,9 +320,14 @@ namespace Knoema.Localization
 			return Provider.GetVisibleCultures();
 		}
 
-		public IEnumerable<ILocalizedObject> GetVisibleLocalizedObjects(CultureInfo culture)
+		public IEnumerable<ILocalizedObject> GetVisibleLocalizedObjects(CultureInfo culture, string text = null)
 		{
-			return Provider.GetVisibleLocalizedObjects(culture);
+			var result = Provider.GetVisibleLocalizedObjects(culture);
+
+			if (string.IsNullOrEmpty(text))
+				return result;
+
+			return result.Where(x => x.Text.ToLowerInvariant().Contains(text.ToLowerInvariant()));
 		}
 
 		private string GetHash(string scope, string text)

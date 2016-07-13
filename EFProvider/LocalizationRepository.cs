@@ -36,7 +36,7 @@ namespace Knoema.Localization.EFProvider
 		{
 			using (var context = new LocalizationContext())
 			{
-				return context.Objects.Where(obj => obj.LocaleId == culture.LCID).ToList();
+				return context.Objects.Where(obj => obj.LocaleId == culture.LCID && obj.Scope.StartsWith("~/")).ToList();
 			}
 		}
 
