@@ -200,24 +200,26 @@ var localization = (function ($) {
 								slist.push(scope);
 						});
 
-						var scope = { Children: [], Name: 'Current page', Scope: '', Translated: false };
+						var currentPage = { Children: [], Name: 'Current page', Scope: '', Translated: false };
 
 						$.each(slist, function () {
 
 							var name = _eplsRoot ? this.replace(_eplsRoot, '') : this;
+							var scope = name;
 
 							if (name.indexOf('~/') == -1)
 								name = '~/' + name;
 
-							scope.Children.push({
+							currentPage.Children.push({
 								Children: [],
 								Name: name,
-								Scope: this,
+								Scope: scope,
 								NotTranslated: notTranslated(this, result)
 							});
 						});
 
-						parseTree([scope], container);
+						if (currentPage.Children.length)
+							parseTree([currentPage], container);
 					};
 
 					parseTree(result, container);

@@ -36,7 +36,10 @@ namespace Knoema.Localization.Web
 			{
 				var ext = Path.GetExtension(n);
 				if (ext == ".js" || ext == ".css")
-					include = include.Replace("{hash}", GetResourceHash(n));
+				{
+					var p = n.Split('.');
+					include = include.Replace("{" + p[p.Length - 2] + "}", GetResourceHash(n));
+				}
 			}
 
 			include = include.Replace("{initialCulture}", LocalizationManager.Instance.GetCulture());
@@ -397,7 +400,7 @@ namespace Knoema.Localization.Web
 			switch (Path.GetExtension(path).ToLowerInvariant())
 			{
 				case ".js":
-					var content = "1.51" +
+					var content = "2.0" +
 					 (path.EndsWith("jquery-localize.js") && LocalizationManager.Provider != null
 						? GetJsFile(path)
 						: GetStreamHash(GetResourceStream(path)));
