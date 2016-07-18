@@ -92,12 +92,12 @@ namespace Knoema.Localization.Web
 
 				case "tree":
 					response = serializer.Serialize(GetTree(
-						_manager.GetAll(string.IsNullOrEmpty(query["culture"]) ? DefaultCulture.Value : new CultureInfo(query["culture"]))
+						_manager.GetLocalizedObjects(string.IsNullOrEmpty(query["culture"]) ? DefaultCulture.Value : new CultureInfo(query["culture"]))
 					));
 					break;
 
 				case "table":
-					response = serializer.Serialize(_manager.GetAll(new CultureInfo(query["culture"]))
+					response = serializer.Serialize(_manager.GetLocalizedObjects(new CultureInfo(query["culture"]))
 						.Where(x => x.Scope != null && x.Scope.StartsWith(query["scope"], StringComparison.InvariantCultureIgnoreCase)));
 					break;
 
@@ -152,7 +152,7 @@ namespace Knoema.Localization.Web
 				case "export":
 
 					var res = new List<ILocalizedObject>();
-					var objects = _manager.GetAll(new CultureInfo(query["culture"]));
+					var objects = _manager.GetLocalizedObjects(new CultureInfo(query["culture"]));
 					var scope = query["scope"];
 
 					if (!string.IsNullOrEmpty(scope))
@@ -259,7 +259,7 @@ namespace Knoema.Localization.Web
 				case "hint":
 					try
 					{
-						response = serializer.Serialize(_manager.GetAll(new CultureInfo(query["culture"]), query["text"])
+						response = serializer.Serialize(_manager.GetLocalizedObjects(new CultureInfo(query["culture"]), query["text"])
 							.Where(x => !string.IsNullOrEmpty(x.Translation))
 							.Select(x => x.Translation)
 							.Distinct());
@@ -269,7 +269,7 @@ namespace Knoema.Localization.Web
 				case "search":
 					try
 					{
-						response = serializer.Serialize(_manager.GetAll(new CultureInfo(query["culture"]), query["text"], false));
+						response = serializer.Serialize(_manager.GetLocalizedObjects(new CultureInfo(query["culture"]), query["text"], false));
 					}
 					catch (CultureNotFoundException) { }
 					break;

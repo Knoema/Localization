@@ -44,7 +44,6 @@ namespace Knoema.Localization
 			if (cultures.Count > 0 && !cultures.Contains(culture))
 				return null;
 
-			// get object from cache...
 			var obj = Provider.Get(culture, scope, text);
 
 			if (readOnly && obj == null)
@@ -95,7 +94,7 @@ namespace Knoema.Localization
 		public void CreateCulture(CultureInfo culture)
 		{
 			var res = new List<ILocalizedObject>();
-			var lst = GetAll(DefaultCulture.Value);
+			var lst = GetLocalizedObjects(DefaultCulture.Value);
 
 			foreach (var obj in lst)
 			{
@@ -125,7 +124,7 @@ namespace Knoema.Localization
 			return result;
 		}
 
-		public IEnumerable<ILocalizedObject> GetAll(CultureInfo culture, string text = null, bool strict = true)
+		public IEnumerable<ILocalizedObject> GetLocalizedObjects(CultureInfo culture, string text = null, bool strict = true)
 		{
 			if (string.IsNullOrEmpty(text))
 				return Provider.GetAll(culture);
@@ -141,7 +140,7 @@ namespace Knoema.Localization
 			if (!GetCultures().Contains(culture))
 				return Enumerable.Empty<ILocalizedObject>();
 
-			return GetAll(culture).Where(x => (x.Scope != null) && (x.Scope.EndsWith("js") || x.Scope.EndsWith("htm")))
+			return GetLocalizedObjects(culture).Where(x => (x.Scope != null) && (x.Scope.EndsWith("js") || x.Scope.EndsWith("htm")))
 				.Select(x => new
 				{
 					Scope = x.Scope,
@@ -166,10 +165,10 @@ namespace Knoema.Localization
 			if (culture == null)
 			{
 				foreach (var item in GetCultures())	
-					Delete(GetAll(item).Where(obj => obj.IsDisabled()).ToArray());	
+					Delete(GetLocalizedObjects(item).Where(obj => obj.IsDisabled()).ToArray());	
 			}
 			else
-				Delete(GetAll(culture).Where(obj => obj.IsDisabled()).ToArray());
+				Delete(GetLocalizedObjects(culture).Where(obj => obj.IsDisabled()).ToArray());
 		}
 
 		public void Disable(params ILocalizedObject[] list)
@@ -309,7 +308,7 @@ namespace Knoema.Localization
 			if (HttpContext.Current == null)
 				return;
 
-			if (!GetAll(CultureInfo.CurrentCulture).Any(x => string.Equals(x.Scope, path, StringComparison.OrdinalIgnoreCase)))
+			if (!GetLocalizedObjects(CultureInfo.CurrentCulture).Any(x => string.Equals(x.Scope, path, StringComparison.OrdinalIgnoreCase)))
 				return;
 
 			var scope = HttpContext.Current.Items["localizationScope"] as List<string> ?? new List<string>();
