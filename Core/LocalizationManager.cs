@@ -70,7 +70,7 @@ namespace Knoema.Localization
 			return null;
 		}
 
-		public void AddTranslatinsForCurrentCulture(string scope, IEnumerable<string> phrases)
+		public void AddTranslationsForCurrentCulture(string scope, IEnumerable<string> phrases)
 		{
 			if (string.IsNullOrEmpty(scope))
 				throw new ArgumentNullException("Scope cannot be null.");
@@ -307,6 +307,9 @@ namespace Knoema.Localization
 		public void InsertScope(string path)
 		{
 			if (HttpContext.Current == null)
+				return;
+
+			if (!GetAll(CultureInfo.CurrentCulture).Any(x => string.Equals(x.Scope, path, StringComparison.OrdinalIgnoreCase)))
 				return;
 
 			var scope = HttpContext.Current.Items["localizationScope"] as List<string> ?? new List<string>();

@@ -152,7 +152,7 @@ var localization = (function ($) {
 					});
 					tree(culture.val());
 				}
-				else
+				else if (!_eplsRoot)
 					$('#tree').html('No languages. To create new language enter name (for example ru-ru) and press "create".');
 			})
 		);
