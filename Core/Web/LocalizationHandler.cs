@@ -29,7 +29,7 @@ namespace Knoema.Localization.Web
 				include = include.Replace("{root}", _manager.GetRoot());
 				include = include.Replace("{scope}", scope == null || scope.Count == 0 ? null : "'" + string.Join("','", scope) + "'");
 			}
-
+			
 			var names = typeof(LocalizationHandler).Assembly.GetManifestResourceNames();
 
 			foreach (var n in names)
@@ -64,19 +64,10 @@ namespace Knoema.Localization.Web
 
 		public void ProcessRequest(HttpContext context)
 		{
-			string response;
-
-			if (context.Request.Url.AbsolutePath.Contains("/_localization/api"))
-				response = Api(
-						context,
-						context.Request.Url.Segments[context.Request.Url.Segments.Length - 1],
-						context.Request.Params);
+			if (context.Request.Url.AbsolutePath.Contains("/_localization/api"))			
+				context.Response.Write(Api(context, context.Request.Url.Segments[context.Request.Url.Segments.Length - 1], context.Request.Params));
 			else
-				response = R(
-						context,
-						GetResourcePath(context.Request.AppRelativeCurrentExecutionFilePath));
-
-			context.Response.Write(response);
+				R(context,GetResourcePath(context.Request.AppRelativeCurrentExecutionFilePath));
 		}
 
 		private string Api(HttpContext context, string endpoint, NameValueCollection query)
@@ -295,7 +286,7 @@ namespace Knoema.Localization.Web
 			return false;
 		}
 
-		private string R(HttpContext context, string path)
+		private void R(HttpContext context, string path)
 		{
 			var response = context.Response;
 			var output = string.Empty;
@@ -346,14 +337,42 @@ namespace Knoema.Localization.Web
 					break;
 			}
 
-			var cache = response.Cache;
-			cache.SetCacheability(System.Web.HttpCacheability.Public);
-			cache.SetExpires(DateTime.Now.AddDays(7));
-			cache.SetValidUntilExpires(true);
-			return output;
+			var hash = GetHash(output);
+
+			if (ResourceNotModified(context, hash))
+				return;
+
+			response.Write(output);
+			CacheResponse(response, hash);
 		}
 
-		static string GetJsFile(string path)
+		private static bool ResourceNotModified(HttpContext context, string hash)
+		{
+			if (context.Request.Headers["If-None-Match"] == hash)
+			{
+				SendNotModified(context.Response, hash);
+				return true;
+			}
+
+			return false;
+		}
+
+		private static void SendNotModified(HttpResponse response, string hash)
+		{
+			CacheResponse(response, hash);
+			response.StatusCode = 304;
+			response.SuppressContent = true;
+		}
+
+		private static void CacheResponse(HttpResponse response, string hash)
+		{
+			response.Cache.SetCacheability(System.Web.HttpCacheability.ServerAndPrivate);
+			response.Cache.SetExpires(DateTime.Now.AddDays(7));
+			response.Cache.SetValidUntilExpires(true);
+			response.Cache.SetETag(hash);
+		}
+
+		private static string GetJsFile(string path)
 		{
 			var current = LocalizationManager.Instance.GetCulture();
 			var output = GetResource(path).Replace("{appPath}", GetAppPath()).Replace("{currentCulture}", current);
@@ -395,26 +414,21 @@ namespace Knoema.Localization.Web
 
 		private static string GetResourceHash(string path)
 		{
-			var hash = string.Empty;
+			var content = string.Empty;
 
 			switch (Path.GetExtension(path).ToLowerInvariant())
 			{
 				case ".js":
-					var content = "2.0" +
-					 (path.EndsWith("jquery-localize.js") && LocalizationManager.Provider != null
-						? GetJsFile(path)
-						: GetStreamHash(GetResourceStream(path)));
-
-					hash = GetStringHash(content);
+					content = path.EndsWith("jquery-localize.js") && LocalizationManager.Provider != null ? GetJsFile(path) : GetResource(path);
 					break;
 				case ".css":
-					hash = GetStreamHash(GetResourceStream(path));
+					content = GetResource(path);
 					break;
 				default:
 					break;
 			}
 
-			return hash;
+			return GetHash("2.0" + content);
 		}
 
 		private static string GetResourcePath(string filename)
@@ -441,6 +455,7 @@ namespace Knoema.Localization.Web
 			}
 
 			var p = filename.Split('.');
+
 			return p.Length > 2
 				? path + Path.GetFileName(filename).Replace("." + p[p.Length - 2], string.Empty)
 				: path + Path.GetFileName(filename);
@@ -479,14 +494,9 @@ namespace Knoema.Localization.Web
 			context.Response.ContentType = "text/plain";
 		}
 
-		private static string GetStringHash(string text)
+		private static string GetHash(string text)
 		{
 			return GetHash(new MD5CryptoServiceProvider().ComputeHash(Encoding.UTF8.GetBytes(text)));
-		}
-
-		private static string GetStreamHash(Stream stream)
-		{
-			return GetHash(new MD5CryptoServiceProvider().ComputeHash(stream));
 		}
 
 		private static string GetHash(byte[] bytes)
