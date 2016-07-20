@@ -99,8 +99,10 @@ var localization = (function ($) {
 
 				$.getJSON('{appPath}/_localization/api/cultures', function (result) {
 
+					var currentCulture = '{currentCulture}';
+
 					$.each(result, function () {
-						$(buildHtml('option', this.toString(), { 'value': this.toString() })).appendTo($('#culture'));
+						$(buildHtml('option', this.toString(), { 'value': this.toString(), 'selected': this.toString() == currentCulture })).appendTo($('#culture'));
 					});
 
 					$('input#import, input#bulkimport').change(function () {

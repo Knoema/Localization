@@ -156,12 +156,14 @@ namespace Knoema.Localization.Web
 					else
 						res.AddRange(objects);
 
+					var root = _manager.GetRoot();
+
 					var data = res.Select(x =>
 						new
 						{
 							LocaleId = x.LocaleId,
 							Hash = x.Hash,
-							Scope = x.Scope,
+							Scope = string.Format("{0}{1}", root, x.Scope),
 							Text = x.Text,
 							Translation = x.Translation
 						});

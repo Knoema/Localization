@@ -205,7 +205,7 @@ namespace Knoema.Localization
 				}
 				else
 				{
-					var imported = Create(new CultureInfo(obj.LocaleId), obj.Text, obj.Scope);
+					var imported = Create(new CultureInfo(obj.LocaleId), obj.Scope, obj.Text);
 					imported.Translation = obj.Translation;
 
 					if (!import.ContainsKey(obj.LocaleId))
@@ -221,7 +221,7 @@ namespace Knoema.Localization
 					if (!import.ContainsKey(obj.LocaleId))
 						import.Add(obj.LocaleId, new List<ILocalizedObject>());
 
-					import[obj.LocaleId].Add(Create(DefaultCulture.Value, obj.Text, obj.Scope));
+					import[obj.LocaleId].Add(Create(DefaultCulture.Value, obj.Scope, obj.Text));
 				}
 			}
 
