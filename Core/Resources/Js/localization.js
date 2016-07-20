@@ -91,10 +91,18 @@ var localization = (function ($) {
 				container.append(result);
 				container.find('div#create-lang input[type="button"]').click(createLanguage);
 
+				if (_eplsRoot) {
+					container.find('#create-lang').remove();
+					container.find('#bulk-import').remove();
+					container.find('#clear-db').remove();
+				}
+
 				$.getJSON('{appPath}/_localization/api/cultures', function (result) {
 
+					var currentCulture = '{currentCulture}';
+
 					$.each(result, function () {
-						$(buildHtml('option', this.toString(), { 'value': this.toString() })).appendTo($('#culture'));
+						$(buildHtml('option', this.toString(), { 'value': this.toString(), 'selected': this.toString() == currentCulture })).appendTo($('#culture'));
 					});
 
 					$('input#import, input#bulkimport').change(function () {
@@ -146,7 +154,7 @@ var localization = (function ($) {
 					});
 					tree(culture.val());
 				}
-				else
+				else if (!_eplsRoot)
 					$('#tree').html('No languages. To create new language enter name (for example ru-ru) and press "create".');
 			})
 		);
@@ -185,24 +193,35 @@ var localization = (function ($) {
 					if (_epls.length > 0) {
 
 						var slist = [];
+
 						$.each(_epls, function () {
-							if ($.inArray(this, slist) == -1)
-								slist.push(this);
+
+							var scope = this.toLowerCase();
+
+							if (!_eplsRoot || scope.indexOf(_eplsRoot) > -1)
+								slist.push(scope);
 						});
 
-						var scope = { Children: [], IsRoot: true, Label: 'Current page', Scope: '', Translated: false };
+						var currentPage = { Children: [], Name: 'Current page', Scope: '', Translated: false };
 
 						$.each(slist, function () {
-							scope.Children.push({
+
+							var name = _eplsRoot ? this.replace(_eplsRoot, '') : this;
+							var scope = name;
+
+							if (name.indexOf('~/') == -1)
+								name = '~/' + name;
+
+							currentPage.Children.push({
 								Children: [],
-								IsRoot: false,
-								Label: this,
-								Scope: this,
-								Translated: isTranslated(this, result[0].Children)
+								Name: name,
+								Scope: scope,
+								NotTranslated: notTranslated(this, result)
 							});
 						});
 
-						parseTree([scope], container);
+						if (currentPage.Children.length)
+							parseTree([currentPage], container);
 					};
 
 					parseTree(result, container);
@@ -222,16 +241,17 @@ var localization = (function ($) {
 				})
 			);
 
-			var isTranslated = function (scope, tree) {
+			var notTranslated = function (scope, tree) {
 				
-				for (var i = 0; i < tree.length; i++ ){
+				for (var key in tree){
 
-					if (tree[i].Scope.toLowerCase() == scope)
-						return tree[i].Translated;
+					if (tree[key].Scope.toLowerCase() == scope)
+						return tree[key].NotTranslated;
 
-					if (tree[i].Children.length > 0) {
+					var children = Object.keys(tree[key].Children).length;
+					if (children) {
 
-						var res = isTranslated(scope, tree[i].Children);
+						var res = notTranslated(scope, tree[key].Children);
 
 						if (res != null)
 							return res;
@@ -248,9 +268,10 @@ var localization = (function ($) {
 				$.each(treeNode, function () {
 
 					var li = $(buildHtml('li')).appendTo(ul);
+					var children = Object.keys(this.Children).length;
 
-					$(buildHtml('span', { 'class': this.Children.length > 0 ? 'folder' : 'file' })).appendTo(li);
-					$(buildHtml('span', this.Label, { 'class': 'label' + (!this.Translated || this.Children.length > 0 ? ' untranslated' : ''), 'scope': this.Scope })).appendTo(li);
+					$(buildHtml('span', { 'class': children > 0 ? 'folder' : 'file' })).appendTo(li);
+					$(buildHtml('span', this.Name, { 'class': 'label' + (this.NotTranslated ? ' not-translated' : ''), 'scope': this.Scope })).appendTo(li);
 
 					parseTree(this.Children, li);
 				});

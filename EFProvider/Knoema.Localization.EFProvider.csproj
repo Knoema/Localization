@@ -45,7 +45,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="LocalizationRepository.cs" />
+    <Compile Include="LocalizationCache.cs" />
+    <Compile Include="LocalizationContext.cs" />
+    <Compile Include="LocalizationProvider.cs" />
     <Compile Include="LocalizedObject.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

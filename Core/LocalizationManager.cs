@@ -13,12 +13,9 @@ namespace Knoema.Localization
 	{
 		public const string CookieName = "current-lang";
 		public const string QueryParameter = "lang";
-
+		public static ILocalizationProvider Provider { get; set; }
+		
 		private static object _lock = new object();
-		public static ILocalizationRepository Repository { get; set; }
-
-		private static object _lockBundlesCount = new object();
-		private int _initialBundlesCount = 256;
 
 		private static readonly LocalizationManager _instanse = new LocalizationManager();
 		public static LocalizationManager Instance
@@ -47,10 +44,7 @@ namespace Knoema.Localization
 			if (cultures.Count > 0 && !cultures.Contains(culture))
 				return null;
 
-			var hash = GetHash(scope.ToLowerInvariant() + text);
-
-			// get object from cache...
-			var obj = GetLocalizedObject(culture, hash);
+			var obj = Provider.Get(culture, scope, text);
 
 			if (readOnly && obj == null)
 				return null;
@@ -64,9 +58,9 @@ namespace Knoema.Localization
 				foreach (var c in cultures)
 					lock (_lock)
 					{
-						var stored = GetLocalizedObject(c, hash);
+						var stored = Provider.Get(c, scope, text);
 						if (stored == null)
-							Save(c, Create(hash, c.LCID, scope, text));
+							Save(Create(c, scope, text));
 					}
 			}
 			else
@@ -75,7 +69,7 @@ namespace Knoema.Localization
 			return null;
 		}
 
-		public void AddTranslatinsForCurrentCulture(string scope, IEnumerable<string> phrases)
+		public void AddTranslationsForCurrentCulture(string scope, IEnumerable<string> phrases)
 		{
 			if (string.IsNullOrEmpty(scope))
 				throw new ArgumentNullException("Scope cannot be null.");
@@ -83,61 +77,62 @@ namespace Knoema.Localization
 			if (phrases == null || !phrases.Any())
 				throw new ArgumentNullException("Phrases cannot be null or empty.");
 
-			var lowerScope = scope.ToLowerInvariant();
 			var import = new List<ILocalizedObject>();
 			var toAdd = phrases.Distinct();
 
 			foreach (var phrase in toAdd)
 			{
-				var hash = GetHash(lowerScope + phrase);
-				var obj = GetLocalizedObject(CultureInfo.CurrentCulture, hash);
+				var obj = Provider.Get(CultureInfo.CurrentCulture, scope, phrase);
 
 				if (obj == null)
-					import.Add(Create(hash, CultureInfo.CurrentCulture.LCID, scope, phrase));
+					import.Add(Create(CultureInfo.CurrentCulture, scope, phrase));
 			}
 
-			Save(CultureInfo.CurrentCulture, import.ToArray());
+			Save(import.ToArray());
 		}
 
 		public void CreateCulture(CultureInfo culture)
 		{
 			var res = new List<ILocalizedObject>();
+			var lst = GetLocalizedObjects(DefaultCulture.Value);
 
-			var lst = GetAll(DefaultCulture.Value);
 			foreach (var obj in lst)
 			{
-				var stored = GetLocalizedObject(culture, obj.Hash);
+				var stored = Provider.Get(culture, obj.Scope, obj.Text);
 				if (stored == null)
-					res.Add(Create(obj.Hash, culture.LCID, obj.Scope, obj.Text));
+					res.Add(Create(culture, obj.Scope, obj.Text));
 			}
 
-			Save(culture, res.ToArray());
+			Save(res.ToArray());
 		}
 
-		public ILocalizedObject Create(string hash, int localeId, string scope, string text)
+		public ILocalizedObject Create(CultureInfo culture, string scope, string text)
 		{
-			var result = Repository.Create();
-			result.Hash = hash;
-			result.LocaleId = localeId;
-			result.Scope = scope;
-			result.Text = text;
-
-			return result;
+			return Provider.Create(culture, scope, text);
 		}
 
 		public ILocalizedObject Get(int key, bool ignoreDisabled = false)
 		{
-			var obj = LocalizationCache.Get<ILocalizedObject>(key.ToString());
-			if (obj == null)
-			{
-				obj = Repository.Get(key);
-				LocalizationCache.Insert(key.ToString(), obj);
-			}
+			var result = Provider.Get(key);
 
-			if (ignoreDisabled && obj.IsDisabled())
+			if (result == null)
 				return null;
 
-			return obj;
+			if (ignoreDisabled && result.IsDisabled())
+				return null;
+
+			return result;
+		}
+
+		public IEnumerable<ILocalizedObject> GetLocalizedObjects(CultureInfo culture, string text = null, bool strict = true)
+		{
+			if (string.IsNullOrEmpty(text))
+				return Provider.GetAll(culture);
+
+			if (strict)
+				return Provider.GetAll(culture).Where(x => string.Equals(x.Text, text, StringComparison.InvariantCultureIgnoreCase));
+
+			return Provider.GetAll(culture).Where(x => x.Text.ToUpperInvariant().Contains(text.ToUpperInvariant()));
 		}
 
 		public IEnumerable<Object> GetScriptResources(CultureInfo culture)
@@ -145,164 +140,93 @@ namespace Knoema.Localization
 			if (!GetCultures().Contains(culture))
 				return Enumerable.Empty<ILocalizedObject>();
 
-			return GetAll(culture).Where(x => (x.Scope != null) && (x.Scope.EndsWith("js") || x.Scope.EndsWith("htm")))
-									.Select(x => new
-									{
-										Scope = x.Scope,
-										Text = x.Text,
-										Translation = x.Translation,
-										IsDisabled = x.IsDisabled()
-									});
-		}
-
-		public IEnumerable<ILocalizedObject> GetAll(CultureInfo culture)
-		{
-			IEnumerable<ILocalizedObject> allObjects = null;
-			var bundles = new LocalizedObjectList[_initialBundlesCount];
-			for (int i = 0; i < _initialBundlesCount; i++)
-			{
-				bundles[i] = LocalizationCache.Get<LocalizedObjectList>(GetBundleName(culture, BundleIndexToHex(i)));
-				if (bundles[i] == null)
+			return GetLocalizedObjects(culture).Where(x => (x.Scope != null) && (x.Scope.EndsWith("js") || x.Scope.EndsWith("htm")))
+				.Select(x => new
 				{
-					if (allObjects == null)
-						allObjects = Repository.GetAll(culture);
-					bundles[i] = UpdateSingleBundle(culture, BundleIndexToHex(i), allObjects);
-				}
-			}
-
-			var lstCombined = new LocalizedObjectList();
-			foreach (var bundle in bundles)
-				lstCombined.AddRange(bundle);
-			return lstCombined.ToEnumerable();
-		}
-
-		private LocalizedObjectList UpdateSingleBundle(CultureInfo culture, string bundleHex, IEnumerable<ILocalizedObject> allObjects)
-		{
-			var bundleObjects = allObjects.Where(x => x.Hash.ToLowerInvariant().Substring(0, 2) == bundleHex);
-			//only objects with correct Hash are loaded
-			var newBundle = new LocalizedObjectList();
-			foreach (var obj in bundleObjects)
-				newBundle.Add(obj);
-			LocalizationCache.Insert(GetBundleName(culture, bundleHex), newBundle);
-			return newBundle;
-		}
-
-		private static string GetBundleName(CultureInfo culture, string bundleHex)
-		{
-			return string.Format("{0}_bundle0x{1}", culture.Name, bundleHex);
-		}
-
-		private static string BundleIndexToHex(int bundleIndex)
-		{
-			return bundleIndex.ToString("x2");
-		}
-
-		private static string GetBundleHex(string hash)
-		{
-			return hash.Substring(0, 2);
-		}
-
-		public LocalizedObjectList GetCachedListForHash(CultureInfo culture, string hash)
-		{
-			if (_initialBundlesCount <= 0)
-				return null;
-			return LocalizationCache.Get<LocalizedObjectList>(GetBundleName(culture, GetBundleHex(hash)));
+					Scope = x.Scope,
+					Text = x.Text,
+					Translation = x.Translation,
+					IsDisabled = x.IsDisabled()
+				});
 		}
 
 		public IEnumerable<CultureInfo> GetCultures()
 		{
-			return Repository.GetCultures().ToList();
+			return Provider.GetCultures();
 		}
 
-		public void Delete(CultureInfo culture, params ILocalizedObject[] list)
+		public void Delete(params ILocalizedObject[] list)
 		{
-			Repository.Delete(list);
-			UpdateInCache(culture, list);
-		}
-
-		private void UpdateInCache(CultureInfo culture, ILocalizedObject[] list)
-		{
-			var bundlesToUpdate = new HashSet<string>();
-			foreach (var obj in list)
-				bundlesToUpdate.Add(GetBundleHex(obj.Hash));
-			var allObjects = Repository.GetAll(culture);
-			foreach (var bundle in bundlesToUpdate)
-				UpdateSingleBundle(culture, bundle, allObjects);
+			Provider.Delete(list);
 		}
 
 		public void ClearDB(CultureInfo culture = null)
 		{
 			if (culture == null)
 			{
-				foreach (var item in GetCultures())
-				{
-					var disabled = GetAll(item).Where(obj => obj.IsDisabled());
-					Delete(item, disabled.ToArray());
-				}
+				foreach (var item in GetCultures())	
+					Delete(GetLocalizedObjects(item).Where(obj => obj.IsDisabled()).ToArray());	
 			}
 			else
-			{
-				var disabled = Repository.GetAll(culture).Where(obj => obj.IsDisabled()).ToList();
-				Delete(culture, disabled.ToArray());
-			}
-
+				Delete(GetLocalizedObjects(culture).Where(obj => obj.IsDisabled()).ToArray());
 		}
 
-		public void Disable(CultureInfo culture, params ILocalizedObject[] list)
+		public void Disable(params ILocalizedObject[] list)
 		{
 			foreach (var obj in list)
 				obj.Disable();
 
-			Repository.Save(list);
-			UpdateInCache(culture, list);
+			Provider.Save(list);
 		}
 
-		public void Save(CultureInfo culture, params ILocalizedObject[] list)
+		public void Save(params ILocalizedObject[] list)
 		{
-			Repository.Save(list);
-			UpdateInCache(culture, list);
+			Provider.Save(list);	
 		}
 
 		public void Import(params ILocalizedObject[] list)
 		{
-			Dictionary<int, List<ILocalizedObject>> import = new Dictionary<int, List<ILocalizedObject>>();
+			var import = new Dictionary<int, List<ILocalizedObject>>();
+			
 			foreach (var obj in list)
 			{
-				if (obj.Hash == null)
-					obj.Hash = GetHash(obj.Scope.ToLowerInvariant() + obj.Text);
-				var stored = GetLocalizedObject(new CultureInfo(obj.LocaleId), obj.Hash);
+				var stored = Provider.Get(new CultureInfo(obj.LocaleId), obj.Scope, obj.Text);
 				if (stored != null)
 				{
 					if (!string.IsNullOrEmpty(obj.Translation))
 					{
 						stored.Translation = obj.Translation;
+						
 						if (!import.ContainsKey(obj.LocaleId))
 							import.Add(obj.LocaleId, new List<ILocalizedObject>());
+						
 						import[obj.LocaleId].Add(stored);
 					}
 				}
 				else
 				{
-					var imported = Create(obj.Hash, obj.LocaleId, obj.Scope, obj.Text);
+					var imported = Create(new CultureInfo(obj.LocaleId), obj.Scope, obj.Text);
 					imported.Translation = obj.Translation;
 
 					if (!import.ContainsKey(obj.LocaleId))
 						import.Add(obj.LocaleId, new List<ILocalizedObject>());
+					
 					import[obj.LocaleId].Add(imported);
 				}
 
 				// check object for default culture
-				var def = GetLocalizedObject(DefaultCulture.Value, obj.Hash);
+				var def = Provider.Get(DefaultCulture.Value, obj.Scope, obj.Text);
 				if (def == null)
 				{
 					if (!import.ContainsKey(obj.LocaleId))
 						import.Add(obj.LocaleId, new List<ILocalizedObject>());
-					import[obj.LocaleId].Add(Create(obj.Hash, DefaultCulture.Value.LCID, obj.Scope, obj.Text));
+
+					import[obj.LocaleId].Add(Create(DefaultCulture.Value, obj.Scope, obj.Text));
 				}
 			}
 
 			foreach (var localeId in import.Keys)
-				Save(new CultureInfo(localeId), import[localeId].ToArray());
+				Save(import[localeId].ToArray());
 		}
 
 		public string FormatScope(Type type)
@@ -312,14 +236,6 @@ namespace Knoema.Localization
 					: type.FullName;
 
 			return scope.Replace(".", "/");
-		}
-
-		public IEnumerable<ILocalizedObject> GetLocalizedObjects(CultureInfo culture, string text, bool strict = true)
-		{
-			if (strict)
-				return GetAll(culture).Where(x => x.Text.ToLowerInvariant() == text.ToLowerInvariant());
-			else
-				return GetAll(culture).Where(x => x.Text.ToLowerInvariant().Contains(text.ToLowerInvariant()));
 		}
 
 		public void SetCulture(CultureInfo culture, string cookieName = LocalizationManager.CookieName)
@@ -392,6 +308,9 @@ namespace Knoema.Localization
 			if (HttpContext.Current == null)
 				return;
 
+			if (!GetLocalizedObjects(CultureInfo.CurrentCulture).Any(x => string.Equals(x.Scope, path, StringComparison.OrdinalIgnoreCase)))
+				return;
+
 			var scope = HttpContext.Current.Items["localizationScope"] as List<string> ?? new List<string>();
 
 			if (!scope.Contains(path))
@@ -408,24 +327,9 @@ namespace Knoema.Localization
 			return HttpContext.Current.Items["localizationScope"] as List<string>;
 		}
 
-		private ILocalizedObject GetLocalizedObject(CultureInfo culture, string hash)
+		public string GetRoot()
 		{
-			var lst = GetCachedListForHash(culture, hash);
-			if (lst == null || !lst.Any())
-				return GetAll(culture).FirstOrDefault(x => x.Hash == hash);
-			else
-				return lst.FindItemByHash(hash);
-		}
-
-		private string GetHash(string text)
-		{
-			var hash = new MD5CryptoServiceProvider().ComputeHash(Encoding.UTF8.GetBytes(text));
-			var stringBuilder = new StringBuilder();
-
-			for (var i = 0; i < hash.Length; i++)
-				stringBuilder.Append(hash[i].ToString("x2"));
-
-			return stringBuilder.ToString();
+			return Provider.GetRoot();
 		}
 	}
 }

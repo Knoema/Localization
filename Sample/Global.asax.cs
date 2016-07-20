@@ -7,6 +7,8 @@ using System.Web;
 using System.Web.Mvc;
 using System.Web.Routing;
 using Knoema.Localization.Mvc;
+using Knoema.Localization;
+using Knoema.Localization.EFProvider;
 
 namespace Sample
 {
@@ -38,16 +40,14 @@ namespace Sample
 			AreaRegistration.RegisterAllAreas();
 
 			// Use LocalDB for Entity Framework by default
-			Database.DefaultConnectionFactory = new SqlConnectionFactory(@"Data Source=(localdb)\v11.0; Integrated Security=True; MultipleActiveResultSets=True");
+			//Database.DefaultConnectionFactory = new SqlConnectionFactory(@"Data Source=(localdb)\v11.0; Initial Catalog=Knoema.Localization.EFProvider.LocalizationRepository;Integrated Security=True; MultipleActiveResultSets=True");
 
 			RegisterGlobalFilters(GlobalFilters.Filters);
 			RegisterRoutes(RouteTable.Routes);
 			
-			// initialize repository
-			Knoema.Localization.LocalizationManager.Repository = new Knoema.Localization.EFProvider.LocalizationRepository();
-			// initialize cache provider
-			Knoema.Localization.LocalizationCache.Initialize(new HttpCache());
-
+			// initialize localization provider
+			LocalizationManager.Provider = new LocalizationProvider();
+		
 			// configure localization of models
 			ModelValidatorProviders.Providers.Clear();
 			ModelValidatorProviders.Providers.Add(new ValidationLocalizer());

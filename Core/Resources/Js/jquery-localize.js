@@ -45,8 +45,9 @@ var _epls = _epls || [];
 	}
 
 	var localize = function (scope, text, formatterArguments) {
-		if (_epli) 
-			_epls.push(scope.toLowerCase());		
+		
+		if (scope && _epls.indexOf(scope) == -1)
+			_epls.push(scope);
 
 		var currentCulture = '{currentCulture}';
 		var initialCulture = $('input#initialCulture').val();
@@ -63,7 +64,7 @@ var _epls = _epls || [];
 
 		var t = null;
 		$.each(data, function () {
-			if (this.Text == text && this.Scope == scope) {
+			if (this.Text == text && this.Scope.toLowerCase() == scope) {
 				t = this;
 				return;
 			};

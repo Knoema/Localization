@@ -18,7 +18,7 @@
 			<input type="submit" value="Export" />
 		</div>
 	</form>
-	<div style="margin-top: 10px">
+	<div>
 		<h3>
 			Import</h3>
 		<form id="import" action="/_localization/api/import" method="post" enctype = "multipart/form-data" target="import-frame">
@@ -27,7 +27,7 @@
 			</div>
 		</form>
 	</div>
-	<div style="margin-top: 10px">
+	<div id="bulk-import">
 		<h3>
 			Bulk import</h3>
 		<form id="bulkimport" action="/_localization/api/bulkimport" method="post" enctype = "multipart/form-data" target="import-frame">
@@ -36,13 +36,13 @@
 			</div>
 		</form>
 	</div>
-	<div style="margin-top: 10px" id="create-lang">
+	<div id="create-lang">
 		<h3>
 			Create language</h3>
 		<input type="text" />
 		<input type="button" value="create" />
 	</div>
-	<div style="margin-top: 10px">
+	<div id="clear-db">
 		<h3>
 			Clear DB of deleted translations</h3>
 		<input id="cleardb" type="button" value="Clear" />

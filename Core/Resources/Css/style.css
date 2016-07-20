@@ -3,6 +3,11 @@
 	font: 10pt Calibri;
 }
 
+div#localization a
+{
+	color: #0077ca;
+}
+
 div#localization input, div#localization select, div#localization textarea
 {
 	line-height: normal;
@@ -106,7 +111,7 @@ div#localization div.popup div.content div.tabs ul li
 
 div#localization div.popup div.content div.tabs ul li.selected
 {
-	background-color: #059BDA;
+	background-color: #0077ca;
 	font-weight: bold;
 	color: white;
 }
@@ -200,9 +205,10 @@ div#localization div.popup div#resources ul.tree span.label
 	color: gray;
 }
 
-div#localization div.popup div#resources ul.tree span.label.untranslated
+div#localization div.popup div#resources ul.tree span.label.not-translated
 {
 	color: black;
+	font-weight: bold;
 }
 
 div#localization div.popup div#resources ul.tree span.label.selected
@@ -295,7 +301,7 @@ div#localization div.popup div#resources div#edit div#scope
 	color: #fff;
 	height: 25px;
 	line-height: 25px;
-	background-color: #059BDA;
+	background-color: #0077ca;
 }
 
 div#localization div.popup div#resources div#edit label
@@ -370,7 +376,7 @@ div#localization div.popup div#resources div#operations span#hint span
 div#localization div.popup div#import h3
 {
 	margin: 5px 0;
-	color: #059BDA;
+	color: #0077ca;
 	font: 13pt Trebuchet MS;
 }
 
@@ -401,4 +407,9 @@ div#localization div.popup div#import textarea
 	width: 250px;
 	height: 50px;
 	margin-top: 5px;
+}
+
+div#localization div.popup div#import div
+{
+	margin-top: 10px;
 }

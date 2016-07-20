@@ -26,16 +26,20 @@ namespace Knoema.Localization.Web
 			if (admin)
 			{
 				include += GetResource(GetResourcePath("include-admin.html"));
-				include = include.Replace("{localizationScope}", scope == null ? string.Empty : "'" + string.Join("','", scope) + "'");
+				include = include.Replace("{root}", _manager.GetRoot());
+				include = include.Replace("{scope}", scope == null || scope.Count == 0 ? null : "'" + string.Join("','", scope) + "'");
 			}
-
+			
 			var names = typeof(LocalizationHandler).Assembly.GetManifestResourceNames();
 
 			foreach (var n in names)
 			{
 				var ext = Path.GetExtension(n);
 				if (ext == ".js" || ext == ".css")
-					include = include.Replace("{hash}", GetResourceHash(n));
+				{
+					var p = n.Split('.');
+					include = include.Replace("{" + p[p.Length - 2] + "}", GetResourceHash(n));
+				}
 			}
 
 			include = include.Replace("{initialCulture}", LocalizationManager.Instance.GetCulture());
@@ -60,19 +64,10 @@ namespace Knoema.Localization.Web
 
 		public void ProcessRequest(HttpContext context)
 		{
-			string response;
-
-			if (context.Request.Url.AbsolutePath.Contains("/_localization/api"))
-				response = Api(
-						context,
-						context.Request.Url.Segments[context.Request.Url.Segments.Length - 1],
-						context.Request.Params);
+			if (context.Request.Url.AbsolutePath.Contains("/_localization/api"))			
+				context.Response.Write(Api(context, context.Request.Url.Segments[context.Request.Url.Segments.Length - 1], context.Request.Params));
 			else
-				response = R(
-						context,
-						GetResourcePath(context.Request.AppRelativeCurrentExecutionFilePath));
-
-			context.Response.Write(response);
+				R(context,GetResourcePath(context.Request.AppRelativeCurrentExecutionFilePath));
 		}
 
 		private string Api(HttpContext context, string endpoint, NameValueCollection query)
@@ -83,26 +78,18 @@ namespace Knoema.Localization.Web
 			switch (endpoint)
 			{
 				case "cultures":
-					response = serializer.Serialize(
-						_manager.GetCultures().Where(x => x.LCID != DefaultCulture.Value.LCID).Select(x => x.Name));
+					response = serializer.Serialize(_manager.GetCultures().Where(x => x.LCID != DefaultCulture.Value.LCID).Select(x => x.Name));
 					break;
 
 				case "tree":
-					var resources = _manager.GetAll(
-						string.IsNullOrEmpty(query["culture"])
-							? DefaultCulture.Value
-							: new CultureInfo(query["culture"])
-						);
-					response = serializer.Serialize(
-						GetTree(resources).Where(x => x.IsRoot));
+					response = serializer.Serialize(GetTree(
+						_manager.GetLocalizedObjects(string.IsNullOrEmpty(query["culture"]) ? DefaultCulture.Value : new CultureInfo(query["culture"]))
+					));
 					break;
 
 				case "table":
-					response = serializer
-						.Serialize(
-							_manager.GetAll(new CultureInfo(query["culture"]))
-									.Where(x => (x.Scope != null) && x.Scope.StartsWith(query["scope"], StringComparison.InvariantCultureIgnoreCase)));
-
+					response = serializer.Serialize(_manager.GetLocalizedObjects(new CultureInfo(query["culture"]))
+						.Where(x => x.Scope != null && x.Scope.StartsWith(query["scope"], StringComparison.InvariantCultureIgnoreCase)));
 					break;
 
 				case "edit":
@@ -118,7 +105,7 @@ namespace Knoema.Localization.Web
 							if (edit != null)
 							{
 								edit.Translation = query["translation"];
-								_manager.Save(new CultureInfo(edit.LocaleId), edit);
+								_manager.Save(edit);
 							}
 						}
 					}
@@ -127,7 +114,7 @@ namespace Knoema.Localization.Web
 				case "delete":
 					var delete = _manager.Get(int.Parse(query["id"]));
 					if (delete != null)
-						_manager.Delete(new CultureInfo(delete.LocaleId), delete);
+						_manager.Delete(delete);
 					break;
 
 				case "cleardb":
@@ -138,7 +125,7 @@ namespace Knoema.Localization.Web
 					var disable = _manager.Get(int.Parse(query["id"]));
 					if (disable != null)
 					{
-						_manager.Disable(new CultureInfo(disable.LocaleId), disable);
+						_manager.Disable(disable);
 						response = disable.Translation;
 					}
 					break;
@@ -155,10 +142,8 @@ namespace Knoema.Localization.Web
 
 				case "export":
 
-					var filepath = Path.GetTempFileName();
 					var res = new List<ILocalizedObject>();
-
-					var objects = _manager.GetAll(new CultureInfo(query["culture"]));
+					var objects = _manager.GetLocalizedObjects(new CultureInfo(query["culture"]));
 					var scope = query["scope"];
 
 					if (!string.IsNullOrEmpty(scope))
@@ -171,15 +156,19 @@ namespace Knoema.Localization.Web
 					else
 						res.AddRange(objects);
 
+					var root = _manager.GetRoot();
+
 					var data = res.Select(x =>
 						new
 						{
 							LocaleId = x.LocaleId,
 							Hash = x.Hash,
-							Scope = x.Scope,
+							Scope = string.Format("{0}{1}", root, x.Scope),
 							Text = x.Text,
 							Translation = x.Translation
 						});
+
+					var filepath = Path.GetTempFileName();
 
 					File.WriteAllText(filepath, serializer.Serialize(data));
 
@@ -246,6 +235,7 @@ namespace Knoema.Localization.Web
 					{
 						if (string.IsNullOrEmpty(query["scope"]) || string.IsNullOrEmpty(query["text"]))
 							BadRequest(context);
+
 						else if (!LocalizationManager.Instance.GetCulture().IsDefault())
 						{
 							_manager.Translate(query["scope"], query["text"]);
@@ -262,23 +252,17 @@ namespace Knoema.Localization.Web
 				case "hint":
 					try
 					{
-						response = serializer.Serialize(
-							_manager.GetLocalizedObjects(
-								new CultureInfo(query["culture"]), query["text"])
-								.Where(x => !string.IsNullOrEmpty(x.Translation))
-								.Select(x => x.Translation)
-								.Distinct()
-						);
+						response = serializer.Serialize(_manager.GetLocalizedObjects(new CultureInfo(query["culture"]), query["text"])
+							.Where(x => !string.IsNullOrEmpty(x.Translation))
+							.Select(x => x.Translation)
+							.Distinct());
 					}
 					catch (CultureNotFoundException) { }
 					break;
 				case "search":
 					try
 					{
-						response = serializer.Serialize(
-							_manager.GetLocalizedObjects(
-								new CultureInfo(query["culture"]), query["text"], false)
-						);
+						response = serializer.Serialize(_manager.GetLocalizedObjects(new CultureInfo(query["culture"]), query["text"], false));
 					}
 					catch (CultureNotFoundException) { }
 					break;
@@ -289,7 +273,7 @@ namespace Knoema.Localization.Web
 
 		static bool IgnoreLocalization()
 		{
-			if (LocalizationManager.Repository == null)
+			if (LocalizationManager.Provider == null)
 				return true;
 
 			var current = LocalizationManager.Instance.GetCulture();
@@ -304,7 +288,7 @@ namespace Knoema.Localization.Web
 			return false;
 		}
 
-		private string R(HttpContext context, string path)
+		private void R(HttpContext context, string path)
 		{
 			var response = context.Response;
 			var output = string.Empty;
@@ -355,14 +339,42 @@ namespace Knoema.Localization.Web
 					break;
 			}
 
-			var cache = response.Cache;
-			cache.SetCacheability(System.Web.HttpCacheability.Public);
-			cache.SetExpires(DateTime.Now.AddDays(7));
-			cache.SetValidUntilExpires(true);
-			return output;
+			var hash = GetHash(output);
+
+			if (ResourceNotModified(context, hash))
+				return;
+
+			response.Write(output);
+			CacheResponse(response, hash);
 		}
 
-		static string GetJsFile(string path)
+		private static bool ResourceNotModified(HttpContext context, string hash)
+		{
+			if (context.Request.Headers["If-None-Match"] == hash)
+			{
+				SendNotModified(context.Response, hash);
+				return true;
+			}
+
+			return false;
+		}
+
+		private static void SendNotModified(HttpResponse response, string hash)
+		{
+			CacheResponse(response, hash);
+			response.StatusCode = 304;
+			response.SuppressContent = true;
+		}
+
+		private static void CacheResponse(HttpResponse response, string hash)
+		{
+			response.Cache.SetCacheability(System.Web.HttpCacheability.ServerAndPrivate);
+			response.Cache.SetExpires(DateTime.Now.AddDays(7));
+			response.Cache.SetValidUntilExpires(true);
+			response.Cache.SetETag(hash);
+		}
+
+		private static string GetJsFile(string path)
 		{
 			var current = LocalizationManager.Instance.GetCulture();
 			var output = GetResource(path).Replace("{appPath}", GetAppPath()).Replace("{currentCulture}", current);
@@ -404,26 +416,21 @@ namespace Knoema.Localization.Web
 
 		private static string GetResourceHash(string path)
 		{
-			var hash = string.Empty;
+			var content = string.Empty;
 
 			switch (Path.GetExtension(path).ToLowerInvariant())
 			{
 				case ".js":
-					var content = "1.51" +
-					 (path.EndsWith("jquery-localize.js") && LocalizationManager.Repository != null
-						? GetJsFile(path)
-						: GetStreamHash(GetResourceStream(path)));
-
-					hash = GetStringHash(content);
+					content = GetJsFile(path);
 					break;
 				case ".css":
-					hash = GetStreamHash(GetResourceStream(path));
+					content = GetResource(path);
 					break;
 				default:
 					break;
 			}
 
-			return hash;
+			return GetHash(	content);
 		}
 
 		private static string GetResourcePath(string filename)
@@ -450,6 +457,7 @@ namespace Knoema.Localization.Web
 			}
 
 			var p = filename.Split('.');
+
 			return p.Length > 2
 				? path + Path.GetFileName(filename).Replace("." + p[p.Length - 2], string.Empty)
 				: path + Path.GetFileName(filename);
@@ -488,14 +496,9 @@ namespace Knoema.Localization.Web
 			context.Response.ContentType = "text/plain";
 		}
 
-		private static string GetStringHash(string text)
+		private static string GetHash(string text)
 		{
 			return GetHash(new MD5CryptoServiceProvider().ComputeHash(Encoding.UTF8.GetBytes(text)));
-		}
-
-		private static string GetStreamHash(Stream stream)
-		{
-			return GetHash(new MD5CryptoServiceProvider().ComputeHash(stream));
 		}
 
 		private static string GetHash(byte[] bytes)
@@ -508,68 +511,16 @@ namespace Knoema.Localization.Web
 			return stringBuilder.ToString();
 		}
 
-		private List<TreeNode> GetTree(IEnumerable<ILocalizedObject> lst)
+		private ScopeEntryCollection GetTree(IEnumerable<ILocalizedObject> lst)
 		{
-			var tree = new List<TreeNode>();
+			var result = new ScopeEntryCollection();
+			var scope = lst.Select(x => x.Scope).Distinct().OrderBy(x => x).ToList();
+			var scopeWithoutTranslation = lst.Where(x => x.Translation == null).Select(x => x.Scope).Distinct().ToList();
 
-			foreach (var obj in lst)
-			{
-				if (obj.Scope == null)
-					continue;
+			foreach (var item in scope)
+				result.AddEntry(item, scopeWithoutTranslation.Contains(item));
 
-				var labels = obj.Scope.Split('/');
-
-				for (int i = 0; i < labels.Length; i++)
-				{
-					var path = string.Empty;
-					for (int j = 0; j <= i; j++)
-						path += labels[j] + "/";
-
-					path = path.Remove(path.LastIndexOf("/"));
-
-					var node = tree.FirstOrDefault(x => x.Scope.ToLowerInvariant() == path.ToLowerInvariant());
-					if (node == null)
-					{
-						node = new TreeNode(labels[i], path, i == 0, true);
-						tree.Add(node);
-					}
-
-					if (i == labels.Length - 1)
-						node.Translated = !string.IsNullOrEmpty(obj.Translation) && node.Translated;
-
-					if (i > 0)
-					{
-						var parent = tree.FirstOrDefault(x => x.Scope.ToLowerInvariant() == path.Remove(path.LastIndexOf("/")).ToLowerInvariant());
-						if (!parent.Children.Contains(node))
-							parent.Children.Add(node);
-					}
-				}
-			}
-
-			return tree;
-		}
-	}
-
-	public class TreeNode
-	{
-		public string Label { get; set; }
-		public string Scope { get; set; }
-		public bool IsRoot { get; set; }
-		public bool Translated { get; set; }
-		public List<TreeNode> Children { get; set; }
-
-		public TreeNode(string label, string scope, bool isRoot, bool translated)
-		{
-			Label = label;
-			Scope = scope;
-			IsRoot = isRoot;
-			Translated = translated;
-			Children = new List<TreeNode>();
-		}
-
-		public override string ToString()
-		{
-			return Scope;
+			return result;
 		}
 	}
 }
