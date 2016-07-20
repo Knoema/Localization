@@ -419,7 +419,7 @@ namespace Knoema.Localization.Web
 			switch (Path.GetExtension(path).ToLowerInvariant())
 			{
 				case ".js":
-					content = path.EndsWith("jquery-localize.js") && LocalizationManager.Provider != null ? GetJsFile(path) : GetResource(path);
+					content = GetJsFile(path);
 					break;
 				case ".css":
 					content = GetResource(path);
@@ -428,7 +428,7 @@ namespace Knoema.Localization.Web
 					break;
 			}
 
-			return GetHash("2.0" + content);
+			return GetHash(	content);
 		}
 
 		private static string GetResourcePath(string filename)
