@@ -308,9 +308,6 @@ namespace Knoema.Localization
 			if (HttpContext.Current == null)
 				return;
 
-			if (!GetLocalizedObjects(CultureInfo.CurrentCulture).Any(x => string.Equals(x.Scope, path, StringComparison.OrdinalIgnoreCase)))
-				return;
-
 			var scope = HttpContext.Current.Items["localizationScope"] as List<string> ?? new List<string>();
 
 			if (!scope.Contains(path))

@@ -379,12 +379,15 @@ namespace Knoema.Localization.Web
 			var current = LocalizationManager.Instance.GetCulture();
 			var output = GetResource(path).Replace("{appPath}", GetAppPath()).Replace("{currentCulture}", current);
 
-			if (IgnoreLocalization())
-				output = output.Replace("{ignoreLocalization}", "true");
-			else
+			if (path.EndsWith("jquery-localize.js"))
 			{
-				var resources = new JavaScriptSerializer().Serialize(_manager.GetScriptResources(new CultureInfo(current)));
-				output = output.Replace("{data}", HttpUtility.JavaScriptStringEncode(resources)).Replace("{ignoreLocalization}", "false");
+				if (IgnoreLocalization())
+					output = output.Replace("{ignoreLocalization}", "true");
+				else
+				{
+					var resources = new JavaScriptSerializer().Serialize(_manager.GetScriptResources(new CultureInfo(current)));
+					output = output.Replace("{data}", HttpUtility.JavaScriptStringEncode(resources)).Replace("{ignoreLocalization}", "false");
+				}
 			}
 
 			if (!HttpContext.Current.IsDebuggingEnabled)
