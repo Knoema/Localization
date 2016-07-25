@@ -64,7 +64,7 @@ var _epls = _epls || [];
 
 		var t = null;
 		$.each(data, function () {
-			if (this.Text == text && this.Scope.toLowerCase() == scope) {
+			if (this.Text == text && this.Scope.toLowerCase() == scope.toLowerCase()) {
 				t = this;
 				return;
 			};
