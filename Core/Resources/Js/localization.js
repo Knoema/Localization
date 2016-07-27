@@ -99,6 +99,9 @@ var localization = (function ($) {
 
 				$.getJSON('{appPath}/_localization/api/cultures', function (result) {
 
+					if (!result.length)
+						container.find('#export').remove();
+
 					var currentCulture = '{currentCulture}';
 
 					$.each(result, function () {
@@ -188,7 +191,7 @@ var localization = (function ($) {
 			container.empty();
 
 			container._busy(
-				$.getJSON('{appPath}/_localization/api/tree?culture=' + culture, function (result) {
+				$.getJSON('{appPath}/_localization/api/tree?culture=' + culture + '&rand=' + Math.random(), function (result) {
 
 					if (_epls.length > 0) {
 
@@ -348,7 +351,7 @@ var localization = (function ($) {
 			container.empty();
 
 			container._busy(
-				$.getJSON('{appPath}/_localization/api/table?culture=' + culture + '&scope=' + scope, function (result) {
+				$.getJSON('{appPath}/_localization/api/table?culture=' + culture + '&scope=' + scope + '&rand=' + Math.random(), function (result) {
 					buildTable(result, container);
 				})
 			);
@@ -363,7 +366,7 @@ var localization = (function ($) {
 			container.empty();
 
 			container._busy(
-				$.getJSON('{appPath}/_localization/api/search?culture=' + culture + '&text=' + encodeURIComponent(query), function (result) {
+				$.getJSON('{appPath}/_localization/api/search?culture=' + culture + '&text=' + encodeURIComponent(query) + '&rand=' + Math.random(), function (result) {
 					if (result.length > 0)
 						buildTable(result, container);
 					else
@@ -444,7 +447,7 @@ var localization = (function ($) {
 			var hint = $('#hint');
 
 			hint.empty();
-			$.getJSON('{appPath}/_localization/api/hint?culture=' + $('#culture').val() + '&text=' + text, function (result) {
+			$.getJSON('{appPath}/_localization/api/hint?culture=' + $('#culture').val() + '&text=' + text + '&rand=' + Math.random(), function (result) {
 
 				if (result.length > 0) {
 

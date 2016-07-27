@@ -43,8 +43,8 @@ namespace Knoema.Localization.Web
 
 			ScopeEntry item;
 
-			if (ContainsKey(key))
-				item = this[key];
+			if (ContainsKey(key.ToLower()))
+				item = this[key.ToLower()];
 			else
 			{
 				item = new ScopeEntry 
@@ -54,7 +54,7 @@ namespace Knoema.Localization.Web
 					NotTranslated = notTranslated
 				};
 
-				Add(key, item);
+				Add(key.ToLower(), item);
 			}
 
 			// Now add the rest to the new item's children

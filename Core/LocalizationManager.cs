@@ -187,9 +187,13 @@ namespace Knoema.Localization
 		public void Import(params ILocalizedObject[] list)
 		{
 			var import = new Dictionary<int, List<ILocalizedObject>>();
+			var root = Provider.GetRoot();
 			
 			foreach (var obj in list)
 			{
+				if (!string.IsNullOrEmpty(root) && !obj.Scope.StartsWith(root, StringComparison.OrdinalIgnoreCase))
+					continue;
+
 				var stored = Provider.Get(new CultureInfo(obj.LocaleId), obj.Scope, obj.Text);
 				if (stored != null)
 				{
