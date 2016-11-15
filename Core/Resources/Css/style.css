@@ -116,6 +116,11 @@ div#localization div.popup div.content div.tabs ul li.selected
 	color: white;
 }
 
+html[dir="rtl"] div#localization div.popup div.content div.tabs
+{
+	margin-right: 25px;
+}
+
 div#localization div.popup div.content div.tab
 {
 	padding: 5px;
