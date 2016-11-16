@@ -21,7 +21,7 @@ div#localization input[type="submit"]
 	padding:2px 5px;
 }
 
-div#localization p, ul 
+div#localization p, div#localization ul
 {
 	line-height: 1.231;	
 }
@@ -94,6 +94,13 @@ div#localization div.popup div.content div.close
 }
 
 /* tabs style*/
+div#localization div.popup div.content div.tabs
+{
+	height: 26px;
+	text-align: left;
+	display: inline-block;
+}
+
 div#localization div.popup div.content div.tabs ul
 {
 	margin: 0;
@@ -114,11 +121,6 @@ div#localization div.popup div.content div.tabs ul li.selected
 	background-color: #0077ca;
 	font-weight: bold;
 	color: white;
-}
-
-html[dir="rtl"] div#localization div.popup div.content div.tabs
-{
-	margin-right: 25px;
 }
 
 div#localization div.popup div.content div.tab
