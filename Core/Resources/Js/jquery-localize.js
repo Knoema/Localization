@@ -46,7 +46,7 @@ var _epls = _epls || [];
 
 	var localize = function (scope, text, formatterArguments) {
 		
-		if (scope && _epls.indexOf(scope) == -1)
+		if (scope && $.inArray(scope, _epls) === -1)
 			_epls.push(scope);
 
 		var currentCulture = '{currentCulture}';
