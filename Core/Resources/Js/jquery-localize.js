@@ -1,7 +1,14 @@
-﻿var _epli = _epli || false;
-var _epls = _epls || [];
+﻿(function (factory) {
+    if (typeof define === 'function' && define.amd) {
+        define(['jquery'], factory);
+    } else {
+        factory(jQuery);
+    }
+}(function ($) {
 
-(function ($) {
+	﻿var _epli = _epli || false;
+	var _epls = _epls || [];
+
 	var formatWith = function(text, formatterArguments){
 		if(typeof(formatterArguments) !== 'object' || formatterArguments == null)
 			return text;
@@ -96,4 +103,5 @@ var _epls = _epls || [];
 			return parseMarkup(localize(scope, text, formatterArguments));
 		}
 	})
-})(jQuery);
+
+}));
