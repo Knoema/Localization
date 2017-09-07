@@ -15,12 +15,12 @@ namespace Knoema.Localization.Mvc
 {
 	public abstract class LocalizedWebViewPage : WebViewPage
 	{
-		public string R(string text, params object[] formatterArguments)
+		public virtual string R(string text, params object[] formatterArguments)
 		{
 			return this.Translate(text, formatterArguments: formatterArguments);
 		}
 
-		public string R(string text, CultureInfo culture, params object[] formatterArguments)
+		public virtual string R(string text, CultureInfo culture, params object[] formatterArguments)
 		{
 			return this.Translate(text, culture, formatterArguments);
 		}
