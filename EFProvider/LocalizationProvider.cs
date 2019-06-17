@@ -14,18 +14,35 @@ namespace Knoema.Localization
 {
 	public class LocalizationProvider : ILocalizationProvider
 	{
-		public IEnumerable<ILocalizedObject> GetAll(CultureInfo culture)
+		public IEnumerable<ILocalizedObject> GetAll(CultureInfo culture, string scope = null)
 		{
-			var result = LocalizationCache.Get<IEnumerable<ILocalizedObject>>(culture.Name);
+			var name = (culture == null) ? "All" : culture.Name;
+			if (scope != null)
+				name += scope;
+
+			var result = LocalizationCache.Get<IEnumerable<ILocalizedObject>>(name);
 
 			if (result == null || !result.Any())
 			{
 				using (var context = new LocalizationContext())
 				{
-					result = context.Objects.Where(obj => obj.LocaleId == culture.LCID && obj.Scope.StartsWith("~/")).ToList();
+					if (culture == null)
+					{
+						if (scope == null)
+							result = context.Objects.Where(obj => obj.Scope.StartsWith("~/")).ToList();
+						else
+							result = context.Objects.Where(obj => obj.Scope.StartsWith("~/") && obj.Scope == scope).ToList();
+					}
+					else
+					{
+						if (scope == null)
+							result = context.Objects.Where(obj => obj.LocaleId == culture.LCID && obj.Scope.StartsWith("~/")).ToList();
+						else
+							result = context.Objects.Where(obj => obj.LocaleId == culture.LCID && obj.Scope.StartsWith("~/") && obj.Scope == scope).ToList();
+					}
 				}
 
-				LocalizationCache.Set(culture.Name, result);
+				LocalizationCache.Set(name, result);
 			}
 		
 			return result;

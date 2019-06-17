@@ -1,6 +1,7 @@
 ﻿'use strict'
 
 var localization = (function ($) {
+	var translationsBuffer = [];
 
 	var addButton = function () {
 		var button = $('<div class="button">Localization</div>').appendTo(getContainer());
@@ -38,16 +39,18 @@ var localization = (function ($) {
 			// switch tabs
 			tabs.click(function () {
 
+				tabs.removeClass('selected');
 				$(this).addClass('selected');
 
 				switch ($(this).text()) {
 					case 'Resources':
-						$('div.tabs li#import').removeClass('selected');
 						addResourcesTab();
 						break;
 					case 'Import/Export':
-						$('div.tabs li#resources').removeClass('selected');
 						addImportTab();
+						break;
+					case 'Translations':
+						addTranslationsTab();
 						break;
 				};
 			});
@@ -73,7 +76,39 @@ var localization = (function ($) {
 					var text = getContainer().find('div#search input[type="text"]').val();
 
 					if (event.keyCode == 13 && text != '')
-						search($('#culture').val(), text);	
+						search($('#culture').val(), text);
+				});
+			})
+		);
+	};
+
+	var addTranslationsTab = function () {
+
+		var container = getContainer().find('div.tab');
+
+		container.empty();
+
+		container._busy(
+			$.get('{appPath}/_localization/translations.html', function (result) {
+
+				container.append(result);
+				loadLangs();
+				container.find('div#search input[type="text"]').keydown(function (event) {
+
+					var text = getContainer().find('div#search input[type="text"]').val();
+
+					if (event.keyCode == 13 && text != '')
+						search($('#culture').val(), text);
+				});
+
+				container.find('div#new-scope input[type="text"]').keydown(function (event) {
+					var text = $(this).val();
+					if (event.keyCode == 13 && text != '') {
+						translationsBuffer.map(function (item) {
+							item.scope = text;
+						});
+						$('td.new-scope').text(text);
+					}
 				});
 			})
 		);
@@ -156,6 +191,32 @@ var localization = (function ($) {
 						$(buildHtml('option', this.toString(), { 'value': this.toString(), 'selected': this.toString() == currentCulture })).appendTo(culture);
 					});
 					tree(culture.val());
+				}
+				else if (!_eplsRoot)
+					$('#tree').html('No languages. To create new language enter name (for example ru-ru) and press "create".');
+			})
+		);
+	};
+
+	var loadLangs = function () {
+
+		var culture = $('#culture');
+
+		culture.change(function () {
+			
+		});
+
+		culture.empty();
+
+		var currentCulture = '{currentCulture}';
+
+		culture._busy(
+			$.getJSON('{appPath}/_localization/api/cultures', function (result) {
+
+				if (result.length > 0) {
+					$.each(result, function () {
+						$(buildHtml('option', this.toString(), { 'value': this.toString(), 'selected': this.toString() == currentCulture })).appendTo(culture);
+					});
 				}
 				else if (!_eplsRoot)
 					$('#tree').html('No languages. To create new language enter name (for example ru-ru) and press "create".');
@@ -343,6 +404,121 @@ var localization = (function ($) {
 	
 	};
 
+	var buildTranslationTable = function (result, container) {
+
+		var table = $(buildHtml('table', { 'class': 'resources-table' })).appendTo(container);
+		container.find('h2.counter').hide();
+
+		// headers
+		var row = $(buildHtml('tr', { 'class': 'header' })).appendTo(table);
+		$(buildHtml('th', 'Scope')).appendTo(row);
+		$(buildHtml('th', 'Text')).appendTo(row);
+		$(buildHtml('th', 'Translation')).appendTo(row);
+		$(buildHtml('th', { 'class': 'op' })).appendTo(row);
+
+		// resources
+		for (var i = 0; i < result.length; i++) {
+
+			var text = result[i].Text;
+
+			var row = $(buildHtml('tr')).appendTo(table);
+			$(buildHtml('td', result[i].Scope, { 'class': 'text scope' })).appendTo(row);
+			$(buildHtml('td', text, { 'class': 'text' })).appendTo(row);
+			$(buildHtml('td', result[i].Translation, { 'class': 'translation' })).appendTo(row);
+
+			var op = $(buildHtml('td', { 'class': 'op' })).appendTo(row);
+
+			var getAll = $(buildHtml('a', 'Get all translations', {
+				'href': '#',
+				'key': text,
+				'scope': result[i].Scope
+			})).appendTo(op)
+
+			getAll.click(function () {
+				translation($(this).attr('key'), $(this).attr('scope'));
+				return false;
+			});
+		};
+	};
+
+	var showTranslationsButtons = function (tableContainer) {
+		var $container = getContainer().find('#translations #new-scope-row #new-scope-row-buttons');
+		$container.css('display', 'inline-block');
+
+		var $backBtn = $container.find('#prev');
+		$backBtn.unbind('click.back')
+		$backBtn.bind('click.back', function back () {
+			$container.hide();
+			tableContainer.find('.result-table').remove();
+			tableContainer.find('h2.counter').remove();
+			tableContainer.find('.resources-table').show();
+		});
+
+		var $copy = $container.find('#copy');
+		$copy.unbind('click.copy')
+		$copy.bind('click.copy', function copy() {
+			copyToClipboard();
+		});
+	}
+
+	var buildTranslatedTable = function (result, container) {
+
+		container.find('.resources-table').hide();
+		var counterBlock = container.find('h2.counter');
+		if (counterBlock.length === 0)
+			counterBlock = $(buildHtml('h2', { 'class': 'counter' })).appendTo(container);
+
+		var table = $(buildHtml('table', { 'class': 'result-table' })).appendTo(container);
+
+		// headers
+		var row = $(buildHtml('tr', { 'class': 'header' })).appendTo(table);
+		$(buildHtml('th', 'Scope')).appendTo(row);
+		$(buildHtml('th', 'Text')).appendTo(row);
+		$(buildHtml('th', 'Translation')).appendTo(row);
+		$(buildHtml('th', 'Code', { 'class': 'code' })).appendTo(row);
+
+		translationsBuffer = [];
+		var newScope = $('#new-scope-row #new-scope input').val() || 'Scope';
+		// resources
+		for (var i = 0; i < result.length; i++) {
+			if (!result[i].Translation || result[i].LocaleId === 1033)
+				continue;
+
+			var text = result[i].Text;
+			var row = $(buildHtml('tr')).appendTo(table);
+			$(buildHtml('td', newScope, { 'class': 'text scope new-scope' })).appendTo(row);
+			$(buildHtml('td', text, { 'class': 'text' })).appendTo(row);
+			$(buildHtml('td', result[i].Translation, { 'class': 'translation' })).appendTo(row);
+			$(buildHtml('td', String(result[i].LocaleId), { 'class': 'code' })).appendTo(row);
+
+			translationsBuffer.push(
+				{
+					'scope': newScope,
+					'text': text,
+					'translation': result[i].Translation,
+					'localeId': String(result[i].LocaleId),
+				}
+			);
+		};
+
+		counterBlock.text('Translated to ' + String(translationsBuffer.length) + ' languages')
+		showTranslationsButtons(container);
+	};
+
+	var copyToClipboard = function () {
+		var translationText = '';
+
+		for (var i = 0; i < translationsBuffer.length; i++) {
+			var item = translationsBuffer[i];
+			translationText += item.scope + '\t' + item.text + '\t' + item.translation + '\t' + item.localeId + '\n';
+		}
+		
+		navigator.clipboard.writeText(translationText)
+			.catch(err => {
+				console.log('Something went wrong', err);
+			});
+	}
+
 	var table = function (culture, scope) {
 
 		if (culture != null) {
@@ -364,16 +540,34 @@ var localization = (function ($) {
 
 			var container = getContainer().find('div#table');
 			container.empty();
+			var activeTab = getContainer().find('div.tabs li.selected').text();
 
 			container._busy(
 				$.getJSON('{appPath}/_localization/api/search?culture=' + culture + '&text=' + encodeURIComponent(query) + '&rand=' + Math.random(), function (result) {
-					if (result.length > 0)
-						buildTable(result, container);
-					else
+					if (result.length > 0) {
+						getContainer().find('#translations #new-scope-row #new-scope-row-buttons').hide();
+						if (activeTab === 'Resources')
+							buildTable(result, container);
+						else
+							buildTranslationTable(result, container);
+					} else {
 						container.html('No results for "' + query + '"');
+					}
 				})
 			);
 		};
+	};
+
+	var translation = function (query, scope) {
+		var container = getContainer().find('div#table');
+		container._busy(
+			$.getJSON('{appPath}/_localization/api/translation?text=' + encodeURIComponent(query) + '&scope=' + scope + '&rand=' + Math.random(), function (result) {
+				if (result.length > 0)
+					buildTranslatedTable(result, container);
+				else
+					container.html('No results for "' + query + '"');
+			})
+		);
 	};
 
 	var editTranslation = function (id) {

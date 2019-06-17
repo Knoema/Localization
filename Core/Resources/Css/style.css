@@ -151,6 +151,113 @@ div#localization div.popup div#resources div#search input[type="text"]
 	width: 580px;
 }
 
+/* translations style*/
+
+	div#localization div.popup div#translations div#toolbar
+	{
+		margin: 5px 5px 10px 5px;
+	}
+
+		div#localization div.popup div#translations div#toolbar div#lang
+		{
+			display: inline;
+		}
+
+		div#localization div.popup div#translations div#toolbar div#search
+		{
+			float: right;
+			margin-top: 0;
+		}
+
+	div#localization div.popup div#translations div#search input[type="text"]
+	{
+		width: 580px;
+	}
+
+	div#localization div.popup div#translations div#results #table
+	{
+		height: 460px;
+		margin-top: 20px;
+		overflow: auto;
+	}
+
+		div#localization div.popup div#translations div#results #table table
+		{
+			padding: 20px;
+			width: 100%;
+			height: 100%;
+			box-sizing: border-box;
+			table-layout: fixed;
+		}
+
+			div#localization div.popup div#translations div#results #table table tbody tr th
+			{
+				text-align: left;
+				padding: 5px 10px;
+			}
+
+			div#localization div.popup div#translations div#results #table table tbody tr th.code
+			{
+				width: 50px;
+			}
+
+			div#localization div.popup div#translations div#results #table table tbody tr th.op
+			{
+				width: 140px;
+			}
+
+			div#localization div.popup div#translations div#results #table table tbody tr td
+			{
+				padding: 5px 10px;
+			}
+
+				div#localization div.popup div#translations div#results #table table tbody tr td.op
+				{
+					text-align: center;
+				}
+
+				div#localization div.popup div#translations div#results #table table tbody tr td.scope
+				{
+					word-break: break-word;
+				}
+
+			div#localization div.popup div#translations div#results #table table tbody tr:nth-child(odd)
+			{
+				background-color: #F0F0F0;
+			}
+
+	div#localization div.popup div#translations div#new-scope-row
+	{
+		margin: 5px;
+		overflow: hidden;
+	}
+
+		div#localization div.popup div#translations div#new-scope-row div#new-scope-row-buttons
+		{
+			display: none;
+		}
+
+			div#localization div.popup div#translations div#new-scope-row div#new-scope-row-buttons span
+			{
+				display: inline-block;
+				font: bold 14pt Verdana,Arial,sans-serif;
+				margin-right: 20px;
+				cursor: pointer;
+			}
+
+	div#localization div.popup div#translations div#new-scope-row div#new-scope
+	{
+		display: inline-block;
+		float: right;
+		margin-top: 4px;
+	}
+
+		div#localization div.popup div#translations div#new-scope-row div#new-scope input
+		{
+			width: 580px;
+		}
+
+
 /* tree style*/
 div#localization div.popup div#resources div#tree
 {

@@ -5,7 +5,7 @@ namespace Knoema.Localization
 {
 	public interface ILocalizationProvider
 	{
-		IEnumerable<ILocalizedObject> GetAll(CultureInfo culture);
+		IEnumerable<ILocalizedObject> GetAll(CultureInfo culture, string scope = null);
 
 		ILocalizedObject Get(int key);
 		ILocalizedObject Get(CultureInfo culture, string scope, string text);

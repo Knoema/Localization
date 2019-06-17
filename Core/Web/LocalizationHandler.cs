@@ -266,6 +266,13 @@ namespace Knoema.Localization.Web
 					}
 					catch (CultureNotFoundException) { }
 					break;
+				case "translation":
+					try
+					{
+						response = serializer.Serialize(_manager.GetAllLocalizedObjects(query["text"], false, query["scope"]));
+					}
+					catch (CultureNotFoundException) { }
+					break;
 			}
 
 			return response;

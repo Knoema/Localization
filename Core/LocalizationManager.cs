@@ -135,6 +135,17 @@ namespace Knoema.Localization
 			return Provider.GetAll(culture).Where(x => x.Text.ToUpperInvariant().Contains(text.ToUpperInvariant()));
 		}
 
+		public IEnumerable<ILocalizedObject> GetAllLocalizedObjects(string text = null, bool strict = true, string scope = null)
+		{
+			if (string.IsNullOrEmpty(text))
+				return null;
+
+			if (strict)
+				return Provider.GetAll(null, scope).Where(x => string.Equals(x.Text, text, StringComparison.InvariantCultureIgnoreCase) && string.Equals(x.Scope, scope, StringComparison.InvariantCultureIgnoreCase));
+
+			return Provider.GetAll(null, scope).Where(x => x.Text.ToUpperInvariant().Contains(text.ToUpperInvariant()) && string.Equals(x.Scope, scope, StringComparison.InvariantCultureIgnoreCase));
+		}
+
 		public IEnumerable<Object> GetScriptResources(CultureInfo culture)
 		{
 			if (!GetCultures().Contains(culture))
