@@ -203,7 +203,10 @@ var localization = (function ($) {
 		var culture = $('#culture');
 
 		culture.change(function () {
-			
+			var text = getContainer().find('div#search input[type="text"]').val();
+
+			if (text != '' && culture.val())
+				search(culture.val(), text);
 		});
 
 		culture.empty();
@@ -455,8 +458,8 @@ var localization = (function ($) {
 		});
 
 		var $copy = $container.find('#copy');
-		$copy.unbind('click.copy')
-		$copy.bind('click.copy', function copy() {
+		$copy.off('click.copy')
+		$copy.on('click.copy', function copy() {
 			copyToClipboard();
 		});
 	}

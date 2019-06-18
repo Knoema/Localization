@@ -143,7 +143,7 @@ namespace Knoema.Localization
 			if (strict)
 				return Provider.GetAll(null, scope).Where(x => string.Equals(x.Text, text, StringComparison.InvariantCultureIgnoreCase) && string.Equals(x.Scope, scope, StringComparison.InvariantCultureIgnoreCase));
 
-			return Provider.GetAll(null, scope).Where(x => x.Text.ToUpperInvariant().Contains(text.ToUpperInvariant()) && string.Equals(x.Scope, scope, StringComparison.InvariantCultureIgnoreCase));
+			return Provider.GetAll(null, scope).Where(x => x.Text.IndexOf(text, StringComparison.OrdinalIgnoreCase) >= 0 && string.Equals(x.Scope, scope, StringComparison.InvariantCultureIgnoreCase));
 		}
 
 		public IEnumerable<Object> GetScriptResources(CultureInfo culture)
