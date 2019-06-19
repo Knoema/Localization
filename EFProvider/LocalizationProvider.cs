@@ -16,11 +16,10 @@ namespace Knoema.Localization
 	{
 		public IEnumerable<ILocalizedObject> GetAll(CultureInfo culture, string scope = null)
 		{
-			var name = (culture == null) ? "All" : culture.Name;
-			if (scope != null)
-				name += scope;
+			IEnumerable<ILocalizedObject> result = null;
 
-			var result = LocalizationCache.Get<IEnumerable<ILocalizedObject>>(name);
+			if (culture != null && scope == null)
+				result = LocalizationCache.Get<IEnumerable<ILocalizedObject>>(culture.Name);
 
 			if (result == null || !result.Any())
 			{
@@ -37,7 +36,8 @@ namespace Knoema.Localization
 					result = query.ToList();
 				}
 
-				LocalizationCache.Set(name, result);
+				if (culture != null && scope == null)
+					LocalizationCache.Set(culture.Name, result);
 			}
 		
 			return result;
