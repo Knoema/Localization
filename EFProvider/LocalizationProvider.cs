@@ -26,20 +26,15 @@ namespace Knoema.Localization
 			{
 				using (var context = new LocalizationContext())
 				{
-					if (culture == null)
-					{
-						if (scope == null)
-							result = context.Objects.Where(obj => obj.Scope.StartsWith("~/")).ToList();
-						else
-							result = context.Objects.Where(obj => obj.Scope.StartsWith("~/") && obj.Scope == scope).ToList();
-					}
-					else
-					{
-						if (scope == null)
-							result = context.Objects.Where(obj => obj.LocaleId == culture.LCID && obj.Scope.StartsWith("~/")).ToList();
-						else
-							result = context.Objects.Where(obj => obj.LocaleId == culture.LCID && obj.Scope.StartsWith("~/") && obj.Scope == scope).ToList();
-					}
+					var query = context.Objects.Where(obj => obj.Scope.StartsWith("~/"));
+
+					if (culture != null)
+						query = query.Where(obj => obj.LocaleId == culture.LCID);
+
+					if (scope != null)
+						query = query.Where(obj => obj.Scope == scope);
+
+					result = query.ToList();
 				}
 
 				LocalizationCache.Set(name, result);

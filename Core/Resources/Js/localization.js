@@ -205,7 +205,7 @@ var localization = (function ($) {
 		culture.change(function () {
 			var text = getContainer().find('div#search input[type="text"]').val();
 
-			if (text != '' && culture.val())
+			if (text && text.length && culture.val())
 				search(culture.val(), text);
 		});
 
@@ -218,7 +218,7 @@ var localization = (function ($) {
 
 				if (result.length > 0) {
 					$.each(result, function () {
-						$(buildHtml('option', this.toString(), { 'value': this.toString(), 'selected': this.toString() == currentCulture })).appendTo(culture);
+						$(buildHtml('option', this.toString(), { 'value': this.toString(), 'selected': this.toString() === currentCulture })).appendTo(culture);
 					});
 				}
 				else if (!_eplsRoot)
