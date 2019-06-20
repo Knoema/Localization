@@ -440,9 +440,8 @@ var localization = (function ($) {
 			getAll.attr('key', text);
 
 			getAll.click(function () {
-				var text = getContainer().find('div#search input[type="text"]').val();
 				textBuffer = $(this).attr('key');
-				translation(text, $(this).attr('scope'));
+				translation(textBuffer, $(this).attr('scope'));
 				return false;
 			});
 		};
