@@ -2,6 +2,7 @@
 
 var localization = (function ($) {
 	var translationsBuffer = [];
+	var textBuffer = '';
 
 	var addButton = function () {
 		var button = $('<div class="button">Localization</div>').appendTo(getContainer());
@@ -433,12 +434,15 @@ var localization = (function ($) {
 
 			var getAll = $(buildHtml('a', 'Get all translations', {
 				'href': '#',
-				'key': text,
 				'scope': result[i].Scope
-			})).appendTo(op)
+			})).appendTo(op);
+
+			getAll.attr('key', text);
 
 			getAll.click(function () {
-				translation($(this).attr('key'), $(this).attr('scope'));
+				var text = getContainer().find('div#search input[type="text"]').val();
+				textBuffer = $(this).attr('key');
+				translation(text, $(this).attr('scope'));
 				return false;
 			});
 		};
@@ -484,7 +488,7 @@ var localization = (function ($) {
 		var newScope = $('#new-scope-row #new-scope input').val() || 'Scope';
 		// resources
 		for (var i = 0; i < result.length; i++) {
-			if (!result[i].Translation || result[i].LocaleId === 1033)
+			if (!result[i].Translation || result[i].LocaleId === 1033 || result[i].Text.toLowerCase() != textBuffer.toLowerCase())
 				continue;
 
 			var text = result[i].Text;

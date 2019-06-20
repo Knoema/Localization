@@ -176,7 +176,7 @@ div#localization div.popup div#resources div#search input[type="text"]
 
 	div#localization div.popup div#translations div#results #table
 	{
-		height: 460px;
+		max-height: 460px;
 		margin-top: 20px;
 		overflow: auto;
 	}
