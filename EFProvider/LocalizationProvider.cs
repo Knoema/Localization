@@ -14,18 +14,30 @@ namespace Knoema.Localization
 {
 	public class LocalizationProvider : ILocalizationProvider
 	{
-		public IEnumerable<ILocalizedObject> GetAll(CultureInfo culture)
+		public IEnumerable<ILocalizedObject> GetAll(CultureInfo culture, string scope = null)
 		{
-			var result = LocalizationCache.Get<IEnumerable<ILocalizedObject>>(culture.Name);
+			IEnumerable<ILocalizedObject> result = null;
+
+			if (culture != null && scope == null)
+				result = LocalizationCache.Get<IEnumerable<ILocalizedObject>>(culture.Name);
 
 			if (result == null || !result.Any())
 			{
 				using (var context = new LocalizationContext())
 				{
-					result = context.Objects.Where(obj => obj.LocaleId == culture.LCID && obj.Scope.StartsWith("~/")).ToList();
+					var query = context.Objects.Where(obj => obj.Scope.StartsWith("~/"));
+
+					if (culture != null)
+						query = query.Where(obj => obj.LocaleId == culture.LCID);
+
+					if (scope != null)
+						query = query.Where(obj => obj.Scope == scope);
+
+					result = query.ToList();
 				}
 
-				LocalizationCache.Set(culture.Name, result);
+				if (culture != null && scope == null)
+					LocalizationCache.Set(culture.Name, result);
 			}
 		
 			return result;
