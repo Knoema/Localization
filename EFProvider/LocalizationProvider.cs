@@ -1,14 +1,11 @@
-﻿using Knoema.Localization.EFProvider;
-using Knoema.Localization.Repository;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Data.Entity.Migrations;
 using System.Globalization;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using System.Web;
-using System.Data.Entity;
-using System.Data.Entity.Migrations;
+
+using Knoema.Localization.EFProvider;
 
 namespace Knoema.Localization
 {

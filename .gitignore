@@ -107,3 +107,5 @@ UpgradeLog*.XML
 # NuGet
 *.nupkg
 NuGet.exe
+/.vs/Sample/v15/Server/sqlite3
+/.vs
