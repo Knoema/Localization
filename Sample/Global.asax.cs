@@ -1,14 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data.Entity;
-using System.Data.Entity.Infrastructure;
-using System.Linq;
-using System.Web;
-using System.Web.Mvc;
+﻿using System.Web.Mvc;
 using System.Web.Routing;
-using Knoema.Localization.Mvc;
+
 using Knoema.Localization;
-using Knoema.Localization.EFProvider;
+using Knoema.Localization.Mvc;
 
 namespace Sample
 {
