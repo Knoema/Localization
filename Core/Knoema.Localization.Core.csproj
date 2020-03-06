@@ -1,118 +1,50 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>8.0.30703</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{AE60CD29-EA20-4D37-8F05-B0072A2A3CA2}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Knoema.Localization</RootNamespace>
-    <AssemblyName>Knoema.Localization.Core</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
+    <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
+    <Copyright>Copyright ©  2012 Knoema</Copyright>
+    <Company>Knoema</Company>
+    <AssemblyVersion>0.1.0.7</AssemblyVersion>
+    <FileVersion>0.1.0.7</FileVersion>
+    <Authors>Knoema</Authors>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Version>1.0.7</Version>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Publish - Test|AnyCPU'">
-    <OutputPath>bin\Publish - Test\</OutputPath>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Publish - Beta|AnyCPU'">
-    <OutputPath>bin\Publish - Beta\</OutputPath>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Publish - Production|AnyCPU'">
-    <OutputPath>bin\Publish - Production\</OutputPath>
-  </PropertyGroup>
+
   <ItemGroup>
-    <Reference Include="AjaxMin">
-      <HintPath>..\packages\AjaxMin.4.60.4609.17023\lib\net20\AjaxMin.dll</HintPath>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Drawing" />
-    <Reference Include="System.Web" />
-    <Reference Include="System.Web.Extensions" />
-    <Reference Include="Microsoft.CSharp" />
+    <None Remove="Resources\Css\style.css" />
+    <None Remove="Resources\Html\edit.html" />
+    <None Remove="Resources\Html\import.html" />
+    <None Remove="Resources\Html\include-admin.html" />
+    <None Remove="Resources\Html\include.html" />
+    <None Remove="Resources\Html\popup.html" />
+    <None Remove="Resources\Html\resources.html" />
+    <None Remove="Resources\Html\translations.html" />
+    <None Remove="Resources\Img\close.png" />
+    <None Remove="Resources\Img\loading.gif" />
+    <None Remove="Resources\Img\localization-tree.png" />
+    <None Remove="Resources\Js\jquery-localize.js" />
+    <None Remove="Resources\Js\localization.js" />
   </ItemGroup>
-  <ItemGroup>
-    <Compile Include="DefaultCulture.cs" />
-    <Compile Include="Extensions\StringExtensions.cs" />
-    <Compile Include="LocalizationManager.cs" />
-    <Compile Include="ILocalizationProvider.cs" />
-    <Compile Include="Repository\LocalizedObject.cs" />
-    <Compile Include="Repository\LocalizedObjectExtension.cs" />
-    <Compile Include="Web\LocalizationHttpModule.cs" />
-    <Compile Include="Repository\ILocalizedObject.cs" />
-    <Compile Include="LocalizedAttribute.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Web\LocalizationHandler.cs" />
-    <Compile Include="Web\ScopeEntry.cs" />
-    <Compile Include="Web\ScopeNodeCollection.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Resources\Html\include.html" />
-    <EmbeddedResource Include="Resources\Img\close.png" />
-    <EmbeddedResource Include="Resources\Js\jquery-localize.js" />
-  </ItemGroup>
+
   <ItemGroup>
     <EmbeddedResource Include="Resources\Css\style.css" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Resources\Img\localization-tree.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
+    <EmbeddedResource Include="Resources\Html\edit.html" />
+    <EmbeddedResource Include="Resources\Html\import.html" />
+    <EmbeddedResource Include="Resources\Html\include-admin.html" />
+    <EmbeddedResource Include="Resources\Html\include.html" />
+    <EmbeddedResource Include="Resources\Html\popup.html" />
+    <EmbeddedResource Include="Resources\Html\resources.html" />
+    <EmbeddedResource Include="Resources\Html\translations.html" />
+    <EmbeddedResource Include="Resources\Img\close.png" />
+    <EmbeddedResource Include="Resources\Img\loading.gif" />
+    <EmbeddedResource Include="Resources\Img\localization-tree.png" />
+    <EmbeddedResource Include="Resources\Js\jquery-localize.js" />
     <EmbeddedResource Include="Resources\Js\localization.js" />
   </ItemGroup>
+
   <ItemGroup>
-    <EmbeddedResource Include="Resources\Img\loading.gif">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
+    <Folder Include="Properties\" />
   </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Resources\Html\popup.html" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Resources\Html\resources.html" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Resources\Html\edit.html" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Resources\Html\import.html" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Knoema.Localization.Core.nuspec" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Resources\Html\include-admin.html" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Resources\Html\translations.html" />
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
+
 </Project>
